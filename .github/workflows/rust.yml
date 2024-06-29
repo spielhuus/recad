@@ -16,6 +16,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: dependencies
+      run: |
+            uname -a &&
+            sudo apt-get -y update &&
+            sudo apt-get -y upgrade &&
+            sudo apt-get -y install kicad-symbols 
     - name: Build
       run: cargo build --verbose
     - name: Run tests
