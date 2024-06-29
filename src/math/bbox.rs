@@ -1,10 +1,7 @@
 use ndarray::{arr2, Array, Array2, ArrayView};
 
 use crate::{
-    gr::{Effects, Justify, Pos, Property, Pt, Rect},
-    schema::{GlobalLabel, Junction, LocalLabel, NoConnect, Symbol, Wire},
-    sexp::constants::el,
-    Schema,
+    gr::{Effects, Justify, Pos, Property, Pt, Rect}, schema::{GlobalLabel, Junction, LocalLabel, NoConnect, Symbol, Wire}, sexp::constants::el, Error, Schema
 };
 
 use super::{pin_position, ToNdarray, Transform};
@@ -37,8 +34,8 @@ fn calculate(pts: Array2<f32>) -> Rect {
     }
 }
 
-fn text(text: &str, pos: &Pos, effects: &Effects) -> Rect {
-    let mut dim = super::fonts::dimension(text, effects);
+fn text(text: &str, pos: &Pos, effects: &Effects) -> Result<Rect, Error> {
+    let mut dim = super::fonts::dimension(text, effects)?;
     //TODO this is not nice.
     let start = if pos.angle == 0.0 {
         Pt {
@@ -118,35 +115,35 @@ fn text(text: &str, pos: &Pos, effects: &Effects) -> Rect {
     };
 
     if dim[[0, 0]] < 0.0 || dim[[0, 1]] < 0.0 {
-        Rect {
+        Ok(Rect {
             start: Pt {
                 x: start.x - dim[[0, 0]].abs(),
                 y: start.y - dim[[0, 1]].abs(),
             },
             end: start,
-        }
+        })
     } else {
-        Rect {
+        Ok(Rect {
             start,
             end: Pt {
                 x: start.x + dim[[0, 0]].abs(),
                 y: start.y + dim[[0, 1]].abs(),
             },
-        }
+        })
     }
 }
 
 pub trait Bbox {
-    fn outline(&self, schema: &Schema) -> Rect;
+    fn outline(&self, schema: &Schema) -> Result<Rect, Error>;
 }
 impl Bbox for Junction {
-    fn outline(&self, _: &Schema) -> Rect {
+    fn outline(&self, _: &Schema) -> Result<Rect, Error> {
         let d = if self.diameter == 0.0 {
             el::JUNCTION_DIAMETER / 2.0
         } else {
             self.diameter / 2.0
         };
-        Rect {
+        Ok(Rect {
             start: Pt {
                 x: self.pos.x - d,
                 y: self.pos.y - d,
@@ -155,13 +152,13 @@ impl Bbox for Junction {
                 x: self.pos.x + d,
                 y: self.pos.y + d,
             },
-        }
+        })
     }
 }
 
 impl Bbox for NoConnect {
-    fn outline(&self, _: &Schema) -> Rect {
-        Rect {
+    fn outline(&self, _: &Schema) -> Result<Rect, Error> {
+        Ok(Rect {
             start: Pt {
                 x: self.pos.x - el::NO_CONNECT_SIZE,
                 y: self.pos.y - el::NO_CONNECT_SIZE,
@@ -170,33 +167,33 @@ impl Bbox for NoConnect {
                 x: self.pos.x + el::NO_CONNECT_SIZE,
                 y: self.pos.y + el::NO_CONNECT_SIZE,
             },
-        }
+        })
     }
 }
 
 impl Bbox for LocalLabel {
-    fn outline(&self, _: &Schema) -> Rect {
+    fn outline(&self, _: &Schema) -> Result<Rect, Error> {
         text(&self.text, &self.pos, &self.effects)
     }
 }
 
 impl Bbox for GlobalLabel {
-    fn outline(&self, _: &Schema) -> Rect {
+    fn outline(&self, _: &Schema) -> Result<Rect, Error> {
         text(&self.text, &self.pos, &self.effects)
     }
 }
 
 impl Bbox for Wire {
-    fn outline(&self, _: &Schema) -> Rect {
-        Rect {
+    fn outline(&self, _: &Schema) -> Result<Rect, Error> {
+        Ok(Rect {
             start: self.pts.0[0],
             end: self.pts.0[1],
-        }
+        })
     }
 }
 
 impl Bbox for Symbol {
-    fn outline(&self, schema: &Schema) -> Rect {
+    fn outline(&self, schema: &Schema) -> Result<Rect, Error> {
         let lib_symbol = schema.library_symbol(&self.lib_id).unwrap();
         let transform = Transform::new()
             .translation(Pt {
@@ -261,53 +258,53 @@ impl Bbox for Symbol {
         }
 
         //calculate the bounds
-        calculate(pts)
+        Ok(calculate(pts))
     }
 }
 
 impl Schema {
     /// Returns the outline of this [`Schema`].
-    pub fn outline(&self) -> Rect {
+    pub fn outline(&self) -> Result<Rect, Error> {
         let mut pts = Array::zeros((0, 2));
         for item in self.iter() {
             match item {
                 crate::schema::SchemaItem::Junction(junction) => {
-                    let bound = junction.outline(self).ndarray();
+                    let bound = junction.outline(self)?.ndarray();
                     pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
                         .expect("insertion failed");
                     pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
                         .expect("insertion failed");
                 }
                 crate::schema::SchemaItem::NoConnect(nc) => {
-                    let bound = nc.outline(self).ndarray();
+                    let bound = nc.outline(self)?.ndarray();
                     pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
                         .expect("insertion failed");
                     pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
                         .expect("insertion failed");
                 }
                 crate::schema::SchemaItem::Wire(wire) => {
-                    let bound = wire.outline(self).ndarray();
+                    let bound = wire.outline(self)?.ndarray();
                     pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
                         .expect("insertion failed");
                     pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
                         .expect("insertion failed");
                 }
                 crate::schema::SchemaItem::LocalLabel(label) => {
-                    let bound = label.outline(self).ndarray();
+                    let bound = label.outline(self)?.ndarray();
                     pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
                         .expect("insertion failed");
                     pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
                         .expect("insertion failed");
                 }
                 crate::schema::SchemaItem::GlobalLabel(label) => {
-                    let bound = label.outline(self).ndarray();
+                    let bound = label.outline(self)?.ndarray();
                     pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
                         .expect("insertion failed");
                     pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
                         .expect("insertion failed");
                 }
                 crate::schema::SchemaItem::Symbol(symbol) => {
-                    let bound = symbol.outline(self).ndarray();
+                    let bound = symbol.outline(self)?.ndarray();
                     pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
                         .expect("insertion failed");
                     pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
@@ -315,7 +312,7 @@ impl Schema {
 
                     for prop in &symbol.props {
                         if prop.visible() {
-                            let bound = prop.outline(self).ndarray();
+                            let bound = prop.outline(self)?.ndarray();
                             pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
                                 .expect("insertion failed");
                             pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
@@ -325,12 +322,12 @@ impl Schema {
                 }
             }
         }
-        calculate(pts)
+        Ok(calculate(pts))
     }
 }
 
 impl Bbox for Property {
-    fn outline(&self, _: &Schema) -> Rect {
+    fn outline(&self, _: &Schema) -> Result<Rect, Error> {
         text(&self.value, &self.pos, &self.effects)
     }
 }

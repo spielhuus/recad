@@ -5,9 +5,12 @@ use ndarray::{arr2, Array2};
 use lazy_static::lazy_static;
 use rust_fontconfig::{FcFontCache, FcPattern};
 
-use crate::gr;
+use crate::{gr, Error};
 
-pub fn dimension(text: &str, effects: &gr::Effects) -> Array2<f32> {
+
+static OSIFONT: &[u8] = include_bytes!("osifont-lgpl3fe.ttf");
+
+pub fn dimension(text: &str, effects: &gr::Effects) -> Result<Array2<f32>, Error> {
     lazy_static! {
         static ref FONT_CACHE: FcFontCache = FcFontCache::build();
         static ref FONTS: Mutex<HashMap<String, Font>> = Mutex::new(HashMap::new());
@@ -21,15 +24,25 @@ pub fn dimension(text: &str, effects: &gr::Effects) -> Array2<f32> {
     };
 
     if !last.contains_key(&face) {
-        let result = FONT_CACHE.query(&FcPattern {
-            name: Some(String::from(&face)),
-            ..Default::default()
-        });
+        let font = if face == "osifont" {
+            OSIFONT.to_vec()
+        } else {
+            let Some(result) = FONT_CACHE.query(&FcPattern {
+                name: Some(String::from(&face)),
+                ..Default::default()
+            }) else {
+                return Err(Error(String::from("font-error"), format!("Unable to load font: {face}")));
+            };
 
-        let result = result.unwrap().path.to_string();
-        let mut f = File::open(result).unwrap();
-        let mut font = Vec::new();
-        f.read_to_end(&mut font).unwrap();
+            let result = result.path.to_string();
+            let Ok(mut f) = File::open(result) else {
+                return Err(Error(String::from("font-error"), format!("Unable to load font: {face}")));
+            };
+
+            let mut font = Vec::new();
+            f.read_to_end(&mut font)?;
+            font
+        };
 
         last.insert(
             face.clone(),
@@ -46,14 +59,14 @@ pub fn dimension(text: &str, effects: &gr::Effects) -> Array2<f32> {
         fonts,
         &TextStyle::new(
             text,
-            (effects.font.size.0 * 1.33333333) as f32,
+            effects.font.size.0 * 1.333333,
             0,
         ),
     );
     let width: usize = layout.glyphs().iter().map(|g| g.width).sum();
 
-    arr2(&[[
+    Ok(arr2(&[[
         width as f32,
-        effects.font.size.0 * 1.33333333,
-    ]])
+        effects.font.size.0 * 1.333333,
+    ]]))
 }

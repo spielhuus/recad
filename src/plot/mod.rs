@@ -5,11 +5,7 @@ use lazy_static::lazy_static;
 use ndarray::{arr2, Array2, Axis};
 
 use crate::{
-    gr::{Circle, Color, GraphicItem, Polyline, Pt, Pts, Rect, Rectangle},
-    math::{bbox::Bbox, ToNdarray, Transform},
-    schema,
-    sexp::constants::el,
-    Schema,
+    gr::{Circle, Color, GraphicItem, Polyline, Pt, Pts, Rect, Rectangle}, math::{bbox::Bbox, ToNdarray, Transform}, schema, sexp::constants::el, Error, Schema
 };
 
 mod svg;
@@ -23,7 +19,7 @@ use theme::{Style, Theme, Themes};
 macro_rules! outline {
     ($self:expr, $item:expr) => {
         if cfg!(debug_assertions) {
-            let outline = $item.outline(&$self.schema);
+            let outline = $item.outline(&$self.schema)?;
             $self.plotter.rect(
                 Rect {
                     start: outline.start,
@@ -165,7 +161,7 @@ impl<P: Plotter> SchemaPlotter<P> {
         }
     }
 
-    pub fn plot(&mut self) {
+    pub fn plot(&mut self) -> Result<(), Error> {
         let paper_size: (f32, f32) = self.schema.paper.clone().into();
         self.plotter.set_view_box(Rect {
             start: Pt { x: 0.0, y: 0.0 },
@@ -413,7 +409,7 @@ impl<P: Plotter> SchemaPlotter<P> {
             //    ));
             //}
         }
-        let outline = self.schema.outline();
+        let outline = self.schema.outline()?;
         self.plotter.rect(
             Rect {
                 start: outline.start,
@@ -424,6 +420,7 @@ impl<P: Plotter> SchemaPlotter<P> {
             },
             Paint::red(),
         );
+        Ok(())
     }
 
     pub fn write<W: Write>(self, writer: &mut W) -> std::io::Result<()> {
