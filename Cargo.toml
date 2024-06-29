@@ -1,0 +1,17 @@
+[package]
+name = "recad"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ndarray = "*"
+svg  = "0.17"
+itertools = "0.13"
+lazy_static = "1.4"
+uuid = { version = "1.8", features = ["v4", "fast-rng", "macro-diagnostics"] }
+
+fontdue = "0.8"
+rust-fontconfig = "0.1.6"
+
+log = "0.4"
+env_logger = "0.11"
