@@ -6,6 +6,7 @@ pub enum Themes {
     Kicad2020,
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct Theme {
     colors: HashMap<Style, Color>,
     widths: HashMap<Style, f32>,
@@ -105,7 +106,7 @@ impl From<String> for Style {
             el::JUNCTION => Self::Junction,
             "noconnect" => Self::NoConnect,
             "outline" => Self::Outline,
-            "property" => Self::Property,
+            el::PROPERTY => Self::Property,
             "todo" => Self::Todo,
             _ => Self::Wire,
         }
@@ -120,7 +121,7 @@ impl std::fmt::Display for Style {
             Self::Junction => el::JUNCTION,
             Self::NoConnect => "noconnect",
             Self::Outline => "outline",
-            Self::Property => "property",
+            Self::Property => el::PROPERTY,
             Self::Label => "label",
             Self::Todo => "todo",
         };

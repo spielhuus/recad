@@ -2,7 +2,28 @@
 
 use std::{fmt::Display, path::Path};
 
-use crate::{draw::At, gr::{Color, Effects, PaperSize, Pos, Property, Pt, Pts, Stroke, TitleBlock}, sexp::constants::el, Schema};
+use crate::{
+    draw::At,
+    gr::{Color, Effects, PaperSize, Pos, Property, Pt, Pts, Stroke, TitleBlock},
+    sexp::constants::el,
+    Error, Schema,
+};
+
+#[derive(Debug, Clone)]
+pub struct Text {
+    ///```Pos``` defines the X and Y coordinates of the junction.
+    pub pos: Pos,
+    ///The text to display.
+    pub text: String,
+    ///the text effects of the text.
+    pub effects: Effects,
+    ///is the text a simulation instruction. 
+    ///This is not supported in recad and only 
+    ///implemented to be compatible with KiCad
+    pub exclude_from_sim: bool, 
+    ///Universally unique identifier for the junction
+    pub uuid: String,
+}
 
 ///The junction token defines a junction in the schematic.
 #[derive(Debug, Clone)]
@@ -28,7 +49,7 @@ pub struct Wire {
     pub uuid: String,
 }
 
-///The local_label tokens define LocalLabel in the schematic.
+///The LocalLabel define LocalLabel in the schematic.
 #[derive(Debug, Clone, PartialEq)]
 pub struct LocalLabel {
     ///Label text
@@ -41,6 +62,8 @@ pub struct LocalLabel {
     pub color: Option<Color>,
     ///Universally unique identifier for the label
     pub uuid: String,
+    ///Are the fields automatically populated with the schematic default values
+    pub fields_autoplaced: bool,
 }
 
 ///The gloabal_label tokens define Global Label in the schematic.
@@ -164,7 +187,7 @@ pub enum PinGraphicalStyle {
     /// see: <img src="https://dev-docs.kicad.org/en/file-formats/sexpr-intro/images/pinshape_clock_fall_16.png"/>
     EdgeClockHigh,
     ///see: <img src="https://dev-docs.kicad.org/en/file-formats/sexpr-intro/images/pinshape_nonlogic_16.png"/>
-    NonLogic, 
+    NonLogic,
 }
 
 impl From<&str> for PinGraphicalStyle {
@@ -253,7 +276,7 @@ pub struct LibrarySymbol {
     ///The on_board token, defines if a symbol is to be exported from the schematic to the
     ///printed circuit board. The only valid attributes are yes and no.
     pub on_board: bool,
-    ///The exclude_from_sim token attribute determines if the symbol is exluded 
+    ///The exclude_from_sim token attribute determines if the symbol is exluded
     ///from simulation.
     pub exclude_from_sim: bool,
     ///The SYMBOL_PROPERTIES is a list of properties that define the symbol. The following
@@ -282,11 +305,11 @@ pub struct LibrarySymbol {
 }
 
 impl LibrarySymbol {
-    ///"UNIT" is an integer that identifies which unit the symbol represents. A "UNIT" 
+    ///"UNIT" is an integer that identifies which unit the symbol represents. A "UNIT"
     ///value of zero (0) indicates that the symbol is common to all units.
     pub fn unit(&self) -> u8 {
         let splits = self.lib_id.split('_').collect::<Vec<&str>>();
-        splits.get(splits.len()-2).unwrap().parse::<u8>().unwrap()
+        splits.get(splits.len() - 2).unwrap().parse::<u8>().unwrap()
     }
 
     ///The "STYLE" indicates which body style the unit represents.
@@ -339,43 +362,55 @@ impl LibrarySymbol {
     }
 }
 
-///The symbol token in the symbol section of the schematic defines an instance
-///of a symbol from the library symbol section of the schematic.
+///The instances token defines a symbol instance. 
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Instance {
+    pub project: String,
+    pub path: String,
+    pub reference: String,
+    pub unit: u8,
+}
+
+///The symbol section of the schematic designates an instance of a symbol from 
+///the library symbol section of the schematic.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Symbol {
-    ///The LIBRARY_IDENTIFIER defines which symbol in the library symbol 
+    ///The LIBRARY_IDENTIFIER defines which symbol in the library symbol
     ///section of the schematic that this schematic symbol references.
     pub lib_id: String,
-    ///The ```pos``` defines the X and Y coordinates and angle 
+    ///The ```pos``` defines the X and Y coordinates and angle
     ///of rotation of the symbol.<br><br>
     pub pos: Pos,
     ///The MIRROR defines the if the symbol is mirrored. The only valid
     ///values are x, y, and xy.
     pub mirror: Option<String>,
-    ///The unit token attribute defines which unit in the symbol library 
+    ///The unit token attribute defines which unit in the symbol library
     ///definition that the schematic symbol represents.
     pub unit: u8,
-    ///The in_bom token attribute determines whether the schematic 
+    ///The in_bom token attribute determines whether the schematic
     ///symbol appears in any bill of materials output.
     pub in_bom: bool,
-    ///The on_board token attribute determines if the footprint associated 
+    ///The on_board token attribute determines if the footprint associated
     ///with the symbol is exported to the board via the netlist.
     pub on_board: bool,
-    ///The exclude_from_sim token attribute determines if the symbol is exluded 
+    ///The exclude_from_sim token attribute determines if the symbol is exluded
     ///from simulation.
     pub exclude_from_sim: bool,
-    ///The UNIQUE_IDENTIFIER defines the universally unique identifier for the 
+    ///The DNP token attribute determines if the symbol is to be populated.
+    pub dnp: bool,
+    ///The UNIQUE_IDENTIFIER defines the universally unique identifier for the
     ///symbol. This is used to map the symbol the symbol instance information.
     pub uuid: String,
-    ///The PROPERTIES section defines a list of symbol properties 
+    ///The PROPERTIES section defines a list of symbol properties
     ///of the schematic symbol.
     pub props: Vec<Property>,
-    ///The PINS section is a list of pins that are used by the symbol. 
-    ///This section can be empty if the symbol does not have any pins.
+    ///The PINS section is a list of pins utilized by the symbol.
+    ///This section may be empty if the symbol lacks any pins.
     pub pins: Vec<(String, String)>,
-
-    //The pin token attributes define ???.
-    //The instances token defines a list of symbol instances grouped by project. Every symbol will have a least one instance.
+    ///The instances token defines a list of symbol instances grouped by project. 
+    ///Every symbol has at least one instance.
+    pub instances: Vec<Instance>,
+    
     //The project token attribute defines the name of the project to which the instance data belongs. There can be instance data from other project when schematics are shared across multiple projects. The projects will be sorted by the PROJECT_NAME in alphabetical order.
     //The path token attribute is the path to the sheet instance for the instance data.
     //The reference token attribute is a string that defines the reference designator for the symbol instance.
@@ -388,7 +423,7 @@ impl Symbol {
             .iter()
             .filter_map(|p| {
                 if p.key == key {
-                    Some(p.value.to_string()) 
+                    Some(p.value.to_string())
                 } else {
                     None
                 }
@@ -396,13 +431,11 @@ impl Symbol {
             .collect::<String>()
     }
     pub fn set_property(&mut self, key: &str, value: &str) {
-        self.props
-            .iter_mut()
-            .for_each(|p| {
-                if p.key == key {
-                    p.value = value.to_string();
-                }
-            });
+        self.props.iter_mut().for_each(|p| {
+            if p.key == key {
+                p.value = value.to_string();
+            }
+        });
     }
 }
 
@@ -426,17 +459,18 @@ impl Schema {
             library_symbols: Vec::new(),
             junctions: Vec::new(),
             no_connects: Vec::new(),
+            graphical_texts: Vec::new(),
             wires: Vec::new(),
             local_labels: Vec::new(),
             global_labels: Vec::new(),
             symbols: Vec::new(),
             grid: 1.27,
-            last_pos: At::Pt(Pt{x: 0.0, y: 0.0}),
+            last_pos: At::Pt(Pt { x: 0.0, y: 0.0 }),
         }
     }
 
     ///Load a schema from a path
-    pub fn load(path: &Path) -> Self {
+    pub fn load(path: &Path) -> Result<Self, Error> {
         let parser = crate::sexp::parser::SexpParser::load(path).unwrap();
         let tree = crate::sexp::SexpTree::from(parser.iter()).unwrap();
         tree.into()
@@ -446,7 +480,7 @@ impl Schema {
         //TODO
     }
 
-    ///Get a Symbol by refernence and unit number.
+    ///Get a Symbol by reference and unit number.
     pub fn symbol(&self, reference: &str, unit: u8) -> Option<&Symbol> {
         self.symbols
             .iter()
@@ -470,7 +504,6 @@ impl Schema {
 #[derive(Debug)]
 pub struct SchemaIterator<'a> {
     items: Vec<SchemaItem<'a>>,
-    index: usize,
 }
 
 #[derive(Debug)]
@@ -531,10 +564,7 @@ impl Schema {
             items.push(SchemaItem::Symbol(symbol));
         }
 
-        SchemaIterator {
-            items,
-            index: 0,
-        }
+        SchemaIterator { items }
     }
 }
 
@@ -546,29 +576,32 @@ mod tests {
 
     #[test]
     fn symbol_property() {
-        let schema = Schema::load(Path::new("tests/summe.kicad_sch"));
+        let schema = Schema::load(Path::new("tests/summe.kicad_sch")).unwrap();
         let symbol = schema.symbols.first().unwrap();
         assert_eq!("J2".to_string(), symbol.property("Reference"));
     }
 
     #[test]
     fn get_symbol() {
-        let schema = Schema::load(Path::new("tests/summe.kicad_sch"));
+        let schema = Schema::load(Path::new("tests/summe.kicad_sch")).unwrap();
         let symbol = schema.symbol("U1", 1).unwrap();
         assert_eq!("U1", symbol.property("Reference"));
     }
 
     #[test]
     fn get_lib_symbol() {
-        let schema = Schema::load(Path::new("tests/summe.kicad_sch"));
+        let schema = Schema::load(Path::new("tests/summe.kicad_sch")).unwrap();
         let symbol = schema.symbol("U1", 1).unwrap();
         let lib_symbol = schema.library_symbol(&symbol.lib_id).unwrap();
-        assert_eq!("Reference_Voltage:LM4040DBZ-5".to_string(), lib_symbol.lib_id);
+        assert_eq!(
+            "Reference_Voltage:LM4040DBZ-5".to_string(),
+            lib_symbol.lib_id
+        );
     }
-    
+
     #[test]
     fn get_lib_symbol_unit() {
-        let schema = Schema::load(Path::new("tests/summe.kicad_sch"));
+        let schema = Schema::load(Path::new("tests/summe.kicad_sch")).unwrap();
         let symbol = schema.symbol("U1", 1).unwrap();
         let lib_symbol = schema.library_symbol(&symbol.lib_id).unwrap();
 
@@ -576,7 +609,7 @@ mod tests {
         let first = iter.next().unwrap();
         assert_eq!(0, first.unit());
         assert_eq!(1, first.style());
-        
+
         let second = iter.next().unwrap();
         assert_eq!(1, second.unit());
         assert_eq!(1, second.style());

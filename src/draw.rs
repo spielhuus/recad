@@ -2,9 +2,7 @@
 use std::path::PathBuf;
 
 use crate::{
-    math, Drawer, 
-    gr::{Effects, Pos, Pt, Pts, Stroke}, 
-    schema::{self}, Schema,
+    gr::{Effects, Pos, Pt, Pts, Stroke}, math, schema, sexp::constants::el, Drawer, Schema
 };
 
 ///Attributes for the elements.
@@ -181,6 +179,7 @@ impl Drawer<Label, Schema> for Schema {
             effects: Effects::default(),
             color: None,
             uuid: crate::uuid!(),
+            fields_autoplaced: true,
         };
         self.local_labels.push(label);
         self
@@ -285,14 +284,14 @@ impl Drawer<Wire, Schema> for Schema {
 }
 
 pub struct Symbol {
-    reference: String,
-    value: String,
-    lib_id: String,
-    unit: u8,
-    angle: f32,
-    mirror: Option<String>,
-    anchor: String,
-    attrs: To,
+    pub reference: String,
+    pub value: String,
+    pub lib_id: String,
+    pub unit: u8,
+    pub angle: f32,
+    pub mirror: Option<String>,
+    pub anchor: String,
+    pub attrs: To,
 }
 
 impl Symbol {
@@ -380,8 +379,8 @@ impl Drawer<Symbol, Schema> for Schema {
         new_symbol.pos.y = start_pt.y;
 
         //set the properties
-        new_symbol.set_property("Reference", &symbol.reference);
-        new_symbol.set_property("Value", &symbol.value);
+        new_symbol.set_property(el::PROPERTY_REFERENCE, &symbol.reference);
+        new_symbol.set_property(el::PROPERTY_VALUE, &symbol.value);
 
         //create the pins
         for pin in &lib.pins(symbol.unit) {

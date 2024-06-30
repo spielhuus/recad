@@ -406,13 +406,13 @@ mod tests {
         document.push("generator");
         document.value("elektron");
         document.end();
-        document.push("uuid");
+        document.push(el::UUID);
         document.value("e91be4a5-3c12-4daa-bee2-30f8afcd4ab8");
         document.end();
-        document.push("paper");
+        document.push(el::PAPER);
         document.text("A4");
         document.end();
-        document.push("lib_symbols");
+        document.push(el::LIB_SYMBOLS);
         document.end();
 
         document.end();
@@ -425,9 +425,9 @@ mod tests {
     #[test]
     fn macro_document() {
         let tree = sexp!(("kicad_sch" ("version" {super::KICAD_SCHEMA_VERSION}) ("generator" "elektron")
-            ("uuid" "e91be4a5-3c12-4daa-bee2-30f8afcd4ab8")
-            ("paper" r"A4")
-            ("lib_symbols")
+            (el::UUID "e91be4a5-3c12-4daa-bee2-30f8afcd4ab8")
+            (el::PAPER r"A4")
+            (el::LIB_SYMBOLS)
         ));
         let mut writer: Vec<u8> = Vec::new();
         tree.root().unwrap().write(&mut writer, 0).unwrap();
@@ -437,16 +437,16 @@ mod tests {
     #[test]
     fn remove_element() {
         let mut tree = sexp!(("kicad_sch" ("version" {super::KICAD_SCHEMA_VERSION}) ("generator" "elektron")
-            ("uuid" "e91be4a5-3c12-4daa-bee2-30f8afcd4ab8")
-            ("paper" r"A4")
-            ("lib_symbols")
+            (el::UUID "e91be4a5-3c12-4daa-bee2-30f8afcd4ab8")
+            (el::PAPER r"A4")
+            (el::LIB_SYMBOLS)
         ));
         let mut writer: Vec<u8> = Vec::new();
         tree.root().unwrap().write(&mut writer, 0).unwrap();
         let result = std::str::from_utf8(&writer).unwrap();
         assert_eq!(String::from("(kicad_sch\n  (version 20211123)\n  (generator elektron)\n  (uuid e91be4a5-3c12-4daa-bee2-30f8afcd4ab8)\n  (paper \"A4\")\n  (lib_symbols)\n)\n"), result);
 
-        tree.root_mut().unwrap().remove("paper").unwrap();
+        tree.root_mut().unwrap().remove(el::PAPER).unwrap();
         let mut writer: Vec<u8> = Vec::new();
         tree.root().unwrap().write(&mut writer, 0).unwrap();
         let result = std::str::from_utf8(&writer).unwrap();

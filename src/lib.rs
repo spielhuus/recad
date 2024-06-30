@@ -13,6 +13,9 @@ pub mod netlist;
 pub mod pcb;
 pub mod plot;
 pub mod schema;
+mod schema_reader;
+mod schema_writer;
+mod schema_ploter;
 mod sexp;
 
 ///create an UUID.
@@ -27,6 +30,14 @@ fn round(n: f32) -> f32 {
     format!("{:.2}", n).parse().unwrap()
 }
 
+fn yes_or_no(input: bool) -> String {
+    if input {
+        String::from("yes")
+    } else {
+        String::from("no")
+    }
+}
+
 ///The Error struct used for all error handling.
 #[derive(Debug)]
 pub struct Error(pub String, pub String);
@@ -37,9 +48,23 @@ impl From<std::io::Error> for Error {
     }
 }
 
-// Define the KiCad Schematic File structure
 #[derive(Debug, Default)]
-///Schematic file format for all versions of KiCad from 6.0.
+///Define the `Schematic` file format.
+///
+///Open a schematic file from a path.
+///
+///```
+///use recad::Schema;
+///use std::path::Path;
+///
+///let path = Path::new("tests/summe.kicad_sch");
+///
+///let schema = Schema::load(path);
+///assert!(schema.is_ok());
+///```
+///
+///
+///
 pub struct Schema {
     ///The ```version``` token attribute defines the schematic version
     ///using the YYYYMMDD date format.<br><br>
@@ -62,7 +87,7 @@ pub struct Schema {
     //pub wires_and_buses: Vec<WireAndBus>,
     //pub images: Vec<Image>,
     //pub graphical_lines: Vec<GraphicalLine>,
-    //pub graphical_texts: Vec<GraphicalText>,
+    pub graphical_texts: Vec<Text>,
     pub local_labels: Vec<schema::LocalLabel>,
     pub global_labels: Vec<schema::GlobalLabel>,
     pub symbols: Vec<schema::Symbol>,
@@ -127,7 +152,9 @@ pub struct SymbolLibrary {
     pathlist: Vec<PathBuf>,
 }
 
-use sexp::SexpValue;
+use plot::{theme::Theme, Plotter};
+use schema::Text;
+use sexp::{constants::el, SexpValue};
 
 impl SymbolLibrary {
     ///Load a symbol from the symbol library, the name is the combination
@@ -138,10 +165,10 @@ impl SymbolLibrary {
             let filename = &format!("{}/{}.kicad_sym", path.to_str().unwrap(), t[0]);
             if let Ok(doc) = SexpParser::load(Path::new(filename)) {
                 if let Ok(tree) = SexpTree::from(doc.iter()) {
-                    for node in tree.root().unwrap().query("symbol") {
+                    for node in tree.root().unwrap().query(el::SYMBOL) {
                         let sym_name: String = node.get(0).unwrap();
                         if sym_name == t[1] {
-                            let mut node: LibrarySymbol = node.into();
+                            let mut node: LibrarySymbol = Into::<Result<LibrarySymbol, Error>>::into(node)?;
                             node.lib_id = format!("{}:{}", t[0], t[1]);
                             return Ok(node);
                         }
@@ -159,4 +186,37 @@ impl SymbolLibrary {
 ///Creat a schema or pcb file from code.
 pub trait Drawer<T, F> {
     fn draw(self, item: T) -> F;
+}
+
+//#[derive(Debug, PartialEq, PartialOrd, Clone)]
+//pub struct ImageCommand {
+//    pub filename: String,
+//}
+//
+//impl ImageCommand {
+//    pub fn new<S>(filename: S) -> Self
+//    where
+//        S: Into<String>,
+//    {
+//        Self {
+//            filename: filename.into(),
+//        }
+//    }
+//
+//    pub(crate) fn command(&self) -> Result<Vec<u8>, Error> {
+//        let mut image_command = Vec::new();
+//        for c in self.filename.chars() {
+//            if (c == '"') || (c == '\\') || (c == '\n') {
+//                return Err(Error(String::from("image"), String::from("Invalid character found!".to_string())));
+//            }
+//            image_command.push(c);
+//        }
+//
+//        Ok(image_command)
+//    }
+//}
+
+
+pub trait Plot {
+    fn plot(self, plotter: &mut impl Plotter, theme: &Theme) -> Result<(), Error>;
 }

@@ -154,7 +154,7 @@ impl<'a> Iterator for SexpIter<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::sexp::{parser::SexpParser, State};
+    use crate::sexp::{constants::el, parser::SexpParser, State};
 
     #[test]
     fn check_index() {
@@ -388,7 +388,7 @@ mod tests {
         if let Some(State::StartSymbol(name)) = &iter.next() {
             count += 1;
             ends += 1;
-            assert_eq!("color", *name);
+            assert_eq!(el::COLOR, *name);
         }
         if let Some(State::Values(value)) = &iter.next() {
             count += 1;

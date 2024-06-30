@@ -1,8 +1,8 @@
 mod tests {
     mod parser {
-        use std::fs::File;
+        use std::{fs::File, io::Write, path::Path};
 
-        use recad::{Drawer, draw::{At, Label, Symbol, Wire}, gr::Pt, plot::{SvgPlotter, theme::Themes, SchemaPlotter}, Schema};
+        use recad::{draw::{At, Label, Symbol, Wire}, gr::Pt, plot::{theme::{Theme, Themes}, SvgPlotter, Plotter}, Drawer, Plot, Schema};
         fn init() {
             let _ = env_logger::builder().is_test(true).try_init();
         }
@@ -22,6 +22,9 @@ mod tests {
         fn draw_schema() {
             init();
 
+            let schema = Schema::load(Path::new("tests/echo/echo.kicad_sch")).unwrap();
+            let mut file = std::fs::File::create("/tmp/summe.kicad_sch").unwrap();
+            schema.write(&mut file).unwrap();
             let mut builder = Schema::new()
                 .move_to(At::Pt(Pt { x: 50.8, y: 50.8 }))
                 .draw(Label::new("Vin").rotate(180.0))
@@ -37,14 +40,13 @@ mod tests {
                 .draw(Wire::new().up().len(4.0));
             
             //builder.write(&mut std::io::stdout()).unwrap();
-            let mut file = File::create("test.kicad_sch").unwrap();
-            builder.write2(&mut file).unwrap();
+            let mut file = File::create("/tmp/test_builder.kicad_sch").unwrap();
+            builder.write(&mut file).unwrap();
 
-            let svg = SvgPlotter::new();
-            let mut plotter = SchemaPlotter::new(builder, svg, Themes::Kicad2020);
-            plotter.plot();
+            let mut svg = SvgPlotter::new();
+            let res = builder.plot(&mut svg, &Theme::from(Themes::Kicad2020));
             let mut file = File::create("/tmp/test_builder.svg").unwrap();
-            plotter.write(&mut file).unwrap();
+            svg.write(&mut file).unwrap();
         }
     }
 }

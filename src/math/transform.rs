@@ -1,6 +1,6 @@
 use ndarray::{array, concatenate, s, Array2, Axis};
 
-use crate::gr::Pt;
+use crate::{gr::Pt, sexp::constants::el};
 
 #[derive(Default)]
 pub struct Transform {
@@ -51,7 +51,7 @@ impl Transform {
                             [ 0.0, 0.0, 1.0]
                         ]
                     );
-            } else if axis == "xy" {
+            } else if axis == el::XY {
                 self.matrix =
                     self.matrix
                         .dot(&array![

@@ -36,7 +36,7 @@ pub struct Node {
 ///
 //TODO #[derive(Clone)]
 pub struct Netlist<'a> {
-    schema: &'a crate::Schema,
+    //TODO schema: &'a crate::Schema,
     pub nodes: Vec<Node>, //TODO only public for tests
     node_positions: Vec<(Pt, NodePositions<'a>)>,
 }
@@ -56,7 +56,7 @@ impl<'a> Netlist<'a> {
 
         let node_positions = Netlist::positions(schema)?;
         let mut netlist = Self {
-            schema,
+            //TODO schema,
             //symbols,
             nodes: Vec::new(),
             node_positions,
@@ -154,7 +154,7 @@ impl<'a> Netlist<'a> {
             schema.library_symbol(&s.lib_id).into_iter().for_each(|l| {
                 for p in l.pins(s.unit) {
                     let pin_pos = model::math::pin_position(s, p);
-                    positions.push((pin_pos.clone(), NodePositions::Pin(pin_pos, p, s)));
+                    positions.push((pin_pos, NodePositions::Pin(pin_pos, p, s)));
                 }
             });
         }
@@ -434,13 +434,10 @@ impl<'a> Netlist<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::gr::Pt;
-
-
     #[test]
     fn check_positions() {
-        let schema = crate::Schema::load(std::path::Path::new("tests/summe.kicad_sch"));
+        let schema = crate::Schema::load(std::path::Path::new("tests/summe.kicad_sch")).unwrap();
         let netlist = super::Netlist::from(&schema).unwrap();
-        //TODO assert_eq!(String::from("+15V"), netlist.netname(Pt { x: 153.67, y: 148.59 }).unwrap());
+        assert_eq!(String::from("+15V"), netlist.netname(crate::gr::Pt { x: 153.67, y: 148.59 }).unwrap());
     }
 }

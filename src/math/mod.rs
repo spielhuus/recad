@@ -143,7 +143,7 @@ mod tests {
 
     #[test]
     fn pin_position() {
-        let schema = Schema::load(Path::new("tests/opamp.kicad_sch"));
+        let schema = Schema::load(Path::new("tests/opamp.kicad_sch")).unwrap();
         let symbol = schema.symbol("U1", 1).unwrap();
         let lib_symbol = schema.library_symbol(&symbol.lib_id).unwrap();
         let positions = lib_symbol
