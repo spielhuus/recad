@@ -32,9 +32,9 @@ fn round(n: f32) -> f32 {
 
 fn yes_or_no(input: bool) -> String {
     if input {
-        String::from("yes")
+        String::from(el::YES)
     } else {
-        String::from("no")
+        String::from(el::NO)
     }
 }
 
@@ -61,9 +61,6 @@ impl From<std::io::Error> for Error {
 ///
 ///let schema = Schema::load(path);
 ///assert!(schema.is_ok());
-///```
-///
-///
 ///
 pub struct Schema {
     ///The ```version``` token attribute defines the schematic version
@@ -91,6 +88,9 @@ pub struct Schema {
     pub local_labels: Vec<schema::LocalLabel>,
     pub global_labels: Vec<schema::GlobalLabel>,
     pub symbols: Vec<schema::Symbol>,
+    pub busses: Vec<Bus>,
+    pub bus_entries: Vec<BusEntry>,
+    pub polylines: Vec<Polyline>,
     //pub hierarchical_sheets: Vec<HierarchicalSheet>,
     //pub root_sheet_instances: Vec<RootSheetInstance>,
     
@@ -153,7 +153,7 @@ pub struct SymbolLibrary {
 }
 
 use plot::{theme::Theme, Plotter};
-use schema::Text;
+use schema::{Bus, BusEntry, Polyline, Text};
 use sexp::{constants::el, SexpValue};
 
 impl SymbolLibrary {

@@ -2,6 +2,8 @@
 ///Constants for the element names.
 pub mod el {
     pub const ARC: &str = "arc";
+    pub const BUS: &str = "bus";
+    pub const BUS_ENTRY: &str = "bus_entry";
     pub const AT: &str = "at";
     pub const BOLD: &str = "bold";
     pub const CENTER: &str = "center";
@@ -84,4 +86,5 @@ pub mod el {
     pub const WIRE: &str = "wire";
     pub const XY: &str = "xy";
     pub const YES: &str = "yes";
+    pub const NO: &str = "no";
 }

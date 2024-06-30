@@ -2,7 +2,7 @@ use std::io::Write;
 
 use crate::{
     gr::{Color, Property},
-    schema::{Junction, LibrarySymbol, LocalLabel, NoConnect, Pin, Symbol, Text, Wire},
+    schema::{Bus, BusEntry, Junction, LibrarySymbol, LocalLabel, NoConnect, Pin, Polyline, Symbol, Text, Wire},
     sexp::{builder::Builder, constants::el},
     yes_or_no, Error, Schema,
 };
@@ -84,11 +84,19 @@ impl Schema {
         for nc in &self.no_connects {
             nc.write(&mut builder)?;
         }
+        
+        for bus_entry in &self.bus_entries {
+            bus_entry.write(&mut builder)?;
+        }
+        
+        for bus in &self.busses {
+            bus.write(&mut builder)?;
+        }
 
         for wire in &self.wires {
             wire.write(&mut builder)?;
         }
-
+        
         for text in &self.graphical_texts {
             text.write(&mut builder)?;
         }
@@ -204,6 +212,76 @@ impl Text {
         builder.value(&self.pos.angle.to_string());
         builder.end();
         self.effects.write(builder)?;
+        builder.push(el::UUID);
+        builder.text(&self.uuid);
+        builder.end();
+        builder.end();
+        Ok(())
+    }
+}
+
+impl Polyline {
+    fn write(&self, builder: &mut Builder) -> Result<(), Error> {
+        builder.push(el::POLYLINE);
+        builder.push(el::PTS);
+        for pt in &self.pts.0 {
+            builder.push(el::XY);
+            builder.value(&pt.x.to_string());
+            builder.value(&pt.y.to_string());
+            builder.end();
+        }
+        builder.end();
+        self.stroke.write(builder)?;
+        builder.push(el::UUID);
+        builder.text(&self.uuid);
+        builder.end();
+        builder.end();
+        Ok(())
+    }
+}
+	//(polyline
+	//	(pts
+	//		(xy 205.74 73.66) (xy 205.74 39.37)
+	//	)
+	//	(stroke
+	//		(width 0)
+	//		(type default)
+	//	)
+	//	(uuid "5ee5a0be-32ed-4d5c-ac29-9a387bc8e2f8")
+	//)
+
+impl Bus {
+    fn write(&self, builder: &mut Builder) -> Result<(), Error> {
+        builder.push(el::BUS);
+        builder.push(el::PTS);
+        for pt in &self.pts.0 {
+            builder.push(el::XY);
+            builder.value(&pt.x.to_string());
+            builder.value(&pt.y.to_string());
+            builder.end();
+        }
+        builder.end();
+        self.stroke.write(builder)?;
+        builder.push(el::UUID);
+        builder.text(&self.uuid);
+        builder.end();
+        builder.end();
+        Ok(())
+    }
+}
+
+impl BusEntry {
+    fn write(&self, builder: &mut Builder) -> Result<(), Error> {
+        builder.push(el::BUS_ENTRY);
+        builder.push(el::AT);
+        builder.value(&self.pos.x.to_string());
+        builder.value(&self.pos.y.to_string());
+        builder.end();
+        builder.push(el::SIZE);
+        builder.value(&self.size.0.to_string());
+        builder.value(&self.size.1.to_string());
+        builder.end();
+        self.stroke.write(builder)?;
         builder.push(el::UUID);
         builder.text(&self.uuid);
         builder.end();

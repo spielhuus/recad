@@ -1,7 +1,8 @@
 use crate::{
     gr::{self, Color, PaperSize, Property},
     schema::{
-        ElectricalTypes, GlobalLabel, Instance, Junction, LibrarySymbol, LocalLabel, NoConnect, Pin, PinGraphicalStyle, PinProperty, Symbol, Text, Wire
+        Bus, BusEntry, ElectricalTypes, GlobalLabel, Instance, Junction, LibrarySymbol, LocalLabel,
+        NoConnect, Pin, PinGraphicalStyle, PinProperty, Polyline, Symbol, Text, Wire,
     },
     sexp::{constants::el, Sexp, SexpQuery, SexpString, SexpStringList, SexpTree, SexpValue},
     Error, Schema,
@@ -32,6 +33,10 @@ impl std::convert::From<SexpTree> for Result<Schema, Error> {
                 el::WIRE => {
                     schema.wires.push(Into::<Result<Wire, Error>>::into(node)?);
                 }
+                el::BUS => schema.busses.push(Into::<Result<Bus, Error>>::into(node)?),
+                el::BUS_ENTRY => schema
+                    .bus_entries
+                    .push(Into::<Result<BusEntry, Error>>::into(node)?),
                 el::LABEL => schema
                     .local_labels
                     .push(Into::<Result<LocalLabel, Error>>::into(node)?),
@@ -52,6 +57,9 @@ impl std::convert::From<SexpTree> for Result<Schema, Error> {
                         .collect()
                 }
                 el::SYMBOL => schema.symbols.push(node.into()),
+                el::POLYLINE => schema
+                    .polylines
+                    .push(Into::<Result<Polyline, Error>>::into(node)?),
                 _ => log::error!("unknown root node: {:?}", node.name),
             }
         }
@@ -63,6 +71,31 @@ impl std::convert::From<&Sexp> for Result<Wire, Error> {
     fn from(sexp: &Sexp) -> Result<Wire, Error> {
         Ok(Wire {
             pts: sexp.into(),
+            stroke: sexp.into(),
+            uuid: error_if_none!(sexp.first(el::UUID), "uuid is mandatory")?,
+        })
+    }
+}
+
+impl std::convert::From<&Sexp> for Result<Bus, Error> {
+    fn from(sexp: &Sexp) -> Result<Bus, Error> {
+        Ok(Bus {
+            pts: sexp.into(),
+            stroke: sexp.into(),
+            uuid: error_if_none!(sexp.first(el::UUID), "uuid is mandatory")?,
+        })
+    }
+}
+
+impl std::convert::From<&Sexp> for Result<BusEntry, Error> {
+    fn from(sexp: &Sexp) -> Result<BusEntry, Error> {
+        Ok(BusEntry {
+            pos: sexp.into(),
+            size: (
+                //TODO error handling
+                sexp.query(el::SIZE).next().unwrap().get(0).unwrap(),
+                sexp.query(el::SIZE).next().unwrap().get(1).unwrap(),
+            ),
             stroke: sexp.into(),
             uuid: error_if_none!(sexp.first(el::UUID), "uuid is mandatory")?,
         })
@@ -143,6 +176,16 @@ fn properties(node: &Sexp) -> Vec<Property> {
             effects: (*x).into(),
         })
         .collect()
+}
+
+impl std::convert::From<&Sexp> for Result<Polyline, Error> {
+    fn from(sexp: &Sexp) -> Self {
+        Ok(Polyline {
+            uuid: error_if_none!(sexp.first(el::UUID), "uuid is mandatory")?,
+            pts: sexp.into(),
+            stroke: sexp.into(),
+        })
+    }
 }
 
 fn pin_numbers(node: &Sexp) -> bool {

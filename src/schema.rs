@@ -1,5 +1,3 @@
-//!Schema definition with all required fields and data types.
-
 use std::{fmt::Display, path::Path};
 
 use crate::{
@@ -9,93 +7,146 @@ use crate::{
     Error, Schema,
 };
 
+///A `Text`in the schema
 #[derive(Debug, Clone)]
 pub struct Text {
-    ///```Pos``` defines the X and Y coordinates of the junction.
+    /// X and Y coordinates of the text.
     pub pos: Pos,
-    ///The text to display.
+    /// The text to display.
     pub text: String,
-    ///the text effects of the text.
+    /// Text effects such as font, color, etc.
     pub effects: Effects,
-    ///is the text a simulation instruction. 
-    ///This is not supported in recad and only 
-    ///implemented to be compatible with KiCad
-    pub exclude_from_sim: bool, 
-    ///Universally unique identifier for the junction
+    /// Whether the text is a simulation instruction (not supported in recad).
+    pub exclude_from_sim: bool,
+    /// Universally unique identifier for the text.
     pub uuid: String,
 }
 
-///The junction token defines a junction in the schematic.
+///A `Polyline` in the schema
+#[derive(Debug, Clone)]
+pub struct Polyline {
+    /// The list of X and Y coordinates of start and end points of the polyline.
+    pub pts: Pts,
+    /// How the polyline is drawn.
+    pub stroke: Stroke,
+    /// Universally unique identifier for the polyline
+    pub uuid: String,
+}
+
+///A `Junction`in the schema.
+///
+///A junction represents a connection point where multiple wires
+///or components intersect, allowing electrical current to 
+///flow between them.
 #[derive(Debug, Clone)]
 pub struct Junction {
-    ///```Pos``` defines the X and Y coordinates of the junction.
+    /// `Pos` defines the X and Y coordinates of the junction.
     pub pos: Pos,
-    ///Diameter of the junction
+    /// Diameter of the junction.
     pub diameter: f32,
+    /// Optional color of the junction.
     pub color: Option<Color>,
-    ///Universally unique identifier for the junction
+    /// Universally unique identifier for the junction.
     pub uuid: String,
 }
 
-///The wire tokens define wires in the schematic.
+///A `Bus`in the schema.
+///
+///A bus is a group of interconnected wires or connections that distribute
+///signals among multiple devices or components, allowing them to share the
+///same signal source.
+#[derive(Debug, Clone)]
+pub struct Bus {
+    /// The list of X and Y coordinates of start and end points of the bus.
+    pub pts: Pts,
+    /// Defines how the bus is drawn.
+    pub stroke: Stroke,
+    /// Universally unique identifier for the bus.
+    pub uuid: String,
+}
+
+///A `BusEntry` in the schema
+#[derive(Debug, Clone)]
+pub struct BusEntry {
+    /// The X and Y coordinates of the junction.
+    pub pos: Pos,
+    /// The size of the bus entry.
+    pub size: (f32, f32),
+    /// How the bus is drawn.
+    pub stroke: Stroke,
+    /// A universally unique identifier for the bus.
+    pub uuid: String,
+}
+
+///Wire tokens in the schematic.
 #[derive(Debug, Clone)]
 pub struct Wire {
-    ///```Pts``` defines the list of X and Y coordinates
-    ///of start and end points of the wire
+    /// The list of X and Y coordinates of start and end points of the wire.
     pub pts: Pts,
-    ///```Stroke``` defines how the wire or bus is drawn
+    /// Defines how the wire or bus is drawn.
     pub stroke: Stroke,
-    /////Universally unique identifier for the wire
+    /// Universally unique identifier for the wire.
     pub uuid: String,
 }
 
-///The LocalLabel define LocalLabel in the schematic.
+///A `LocalLabel` in the schema
+///
+///A local label refers to an identifier assigned to individual
+///components or objects within a specific grouping on
+///the same `[SchemaPage]`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct LocalLabel {
-    ///Label text
+    /// The text displayed on the label.
     pub text: String,
-    ///Position of the label
+    /// The position of the label within the schematic.
     pub pos: Pos,
-    ///```Effects``` defines the effects of the label
+    /// Defines the visual effects applied to the label (e.g., font style, shadow).
     pub effects: Effects,
-    ///Color of the label
+    /// Optional color for the label. If not provided, a default color will be used.
     pub color: Option<Color>,
-    ///Universally unique identifier for the label
+    /// Universally unique identifier for the label.
     pub uuid: String,
-    ///Are the fields automatically populated with the schematic default values
+    /// Specifies whether the fields are automatically populated with the schematic's default values.
     pub fields_autoplaced: bool,
 }
 
-///The gloabal_label tokens define Global Label in the schematic.
+///A `GlobalLabel` in the schema
+///
+///A global label is a custom identifier that can be assigned to 
+///multiple objects or components across the entire design.
 #[derive(Debug, Clone, PartialEq)]
 pub struct GlobalLabel {
-    ///Label text
+    /// The text displayed on the label.
     pub text: String,
-    ///The shape of the box.
+    /// Optional shape of the label's container box. If not provided, the default shape is used.
     pub shape: Option<String>,
-    ///Position of the label
+    /// The position of the label within the schematic.
     pub pos: Pos,
-    ///```Effects``` defines the effects of the label
+    /// Defines the visual effects applied to the label (e.g., font style, shadow).
     pub effects: Effects,
-    //Universally unique identifier for the label
+    /// Universally unique identifier for the label.
     pub uuid: String,
-    //TODO properties: Properties,
+    // TODO: Implement Properties struct and use it in this definition.
 }
 
-///The no_connect token defines a unused pin connection in the schematic.
+/// Represents an unused pin connection in the schematic.
 #[derive(Debug, Clone)]
 pub struct NoConnect {
-    ///```Pos``` defines the X and Y coordinates of the no connect.
+    /// The X and Y coordinates of the no-connect within the schematic.
     pub pos: Pos,
-    //Universally unique identifier for the no connect.
+    /// Universally unique identifier for the no-connect.
     pub uuid: String,
 }
 
+/// Represents properties of a schematic pin.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct PinProperty {
+    /// The name of the property associated with the pin.
     pub name: String,
+    /// Defines the visual effects applied to the label (e.g., font style, shadow).
     pub effects: Effects,
 }
+
 /// Enum representing the different types of electrical pins.
 #[derive(Clone, Debug, Default, Eq, PartialEq, Hash, PartialOrd)]
 pub enum ElectricalTypes {
@@ -362,7 +413,7 @@ impl LibrarySymbol {
     }
 }
 
-///The instances token defines a symbol instance. 
+///The instances token defines a symbol instance.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Instance {
     pub project: String,
@@ -371,7 +422,7 @@ pub struct Instance {
     pub unit: u8,
 }
 
-///The symbol section of the schematic designates an instance of a symbol from 
+///The symbol section of the schematic designates an instance of a symbol from
 ///the library symbol section of the schematic.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Symbol {
@@ -407,10 +458,9 @@ pub struct Symbol {
     ///The PINS section is a list of pins utilized by the symbol.
     ///This section may be empty if the symbol lacks any pins.
     pub pins: Vec<(String, String)>,
-    ///The instances token defines a list of symbol instances grouped by project. 
+    ///The instances token defines a list of symbol instances grouped by project.
     ///Every symbol has at least one instance.
     pub instances: Vec<Instance>,
-    
     //The project token attribute defines the name of the project to which the instance data belongs. There can be instance data from other project when schematics are shared across multiple projects. The projects will be sorted by the PROJECT_NAME in alphabetical order.
     //The path token attribute is the path to the sheet instance for the instance data.
     //The reference token attribute is a string that defines the reference designator for the symbol instance.
@@ -457,9 +507,12 @@ impl Schema {
                 comment: Vec::new(),
             },
             library_symbols: Vec::new(),
+            busses: Vec::new(),
+            bus_entries: Vec::new(),
             junctions: Vec::new(),
             no_connects: Vec::new(),
             graphical_texts: Vec::new(),
+            polylines: Vec::new(),
             wires: Vec::new(),
             local_labels: Vec::new(),
             global_labels: Vec::new(),
