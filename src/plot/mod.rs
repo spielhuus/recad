@@ -54,6 +54,13 @@ impl Paint {
             width: 0.25,
         }
     }
+    pub fn outline() -> Self {
+        Self {
+            color: Color::red(),
+            fill: None,
+            width: 0.08,
+        }
+    }
 }
 
 ///The fot effects for the drawings.

@@ -2,15 +2,10 @@ use lazy_static::lazy_static;
 use ndarray::{arr2, Array2, Axis};
 
 use crate::{
-    gr::{Circle, Color, GraphicItem, Polyline, Pt, Pts, Rect, Rectangle},
-    math::{bbox::Bbox, ToNdarray, Transform},
-    plot::{
+    gr::{Circle, Color, GraphicItem, Polyline, Pt, Pts, Rect, Rectangle}, math::{bbox::Bbox, ToNdarray, Transform}, plot::{
         theme::{Style, Theme},
         FontEffects, Paint, Plotter,
-    },
-    schema::Pin,
-    sexp::constants::el,
-    Error, Plot, Schema,
+    }, schema::SchemaItem, sexp::constants::el, symbols::Pin, Error, Plot, Schema
 };
 
 lazy_static! {
@@ -36,7 +31,7 @@ macro_rules! outline {
                         y: outline.end.y - outline.start.y,
                     },
                 },
-                Paint::red(),
+                Paint::outline(),
             );
         }
     };
@@ -53,228 +48,235 @@ impl Plot for Schema {
             },
         });
 
-        for symbol in &self.symbols {
-            outline!(self, symbol, plotter);
-            for prop in &symbol.props {
-                if prop.visible() {
-                    outline!(self, prop, plotter);
-                    plotter.text(
-                        &prop.value,
-                        prop.pos.into(),
-                        FontEffects {
-                            angle: if symbol.pos.angle + prop.pos.angle >= 360.0 {
-                                symbol.pos.angle + prop.pos.angle - 360.0
-                            } else if symbol.pos.angle + prop.pos.angle >= 180.0 {
-                                symbol.pos.angle + prop.pos.angle - 180.0
-                            } else {
-                                symbol.pos.angle + prop.pos.angle
-                            },
-                            anchor: prop.effects.anchor(),
-                            baseline: prop.effects.baseline(),
-                            face: theme.face(), //TODO prop.effects.font.face.clone().unwrap(),
-                            size: theme.font_size(prop.effects.font.size, Style::Property).0,
-                            color: theme.color(prop.effects.font.color, Style::Property),
-                        },
-                    );
-                }
-            }
+        for item in &self.items {
+            match item {
+                SchemaItem::Symbol(symbol) => {
+                    outline!(self, symbol, plotter);
+                    for prop in &symbol.props {
+                        if prop.visible() {
+                            outline!(self, prop, plotter);
+                            plotter.text(
+                                &prop.value,
+                                prop.pos.into(),
+                                FontEffects {
+                                    angle: if symbol.pos.angle + prop.pos.angle >= 360.0 {
+                                        symbol.pos.angle + prop.pos.angle - 360.0
+                                    } else if symbol.pos.angle + prop.pos.angle >= 180.0 {
+                                        symbol.pos.angle + prop.pos.angle - 180.0
+                                    } else {
+                                        symbol.pos.angle + prop.pos.angle
+                                    },
+                                    anchor: prop.effects.anchor(),
+                                    baseline: prop.effects.baseline(),
+                                    face: theme.face(), //TODO prop.effects.font.face.clone().unwrap(),
+                                    size: theme.font_size(prop.effects.font.size, Style::Property).0,
+                                    color: theme.color(prop.effects.font.color, Style::Property),
+                                },
+                            );
+                        }
+                    }
 
-            let library = self.library_symbol(&symbol.lib_id).unwrap();
-            let transform = Transform::new()
-                .translation(symbol.pos.into())
-                .rotation(symbol.pos.angle)
-                .mirror(&Some(String::from("x"))); //&symbol.mirror);
+                    let library = self.library_symbol(&symbol.lib_id).unwrap();
+                    let transform = Transform::new()
+                        .translation(symbol.pos.into())
+                        .rotation(symbol.pos.angle)
+                        .mirror(&symbol.mirror);
 
-            for lib_symbol in &library.units {
-                if lib_symbol.unit() == 0 || lib_symbol.unit() == symbol.unit {
-                    for g in &lib_symbol.graphics {
-                        match g {
-                            GraphicItem::Polyline(p) => {
-                                polyline(plotter, &transform, p, &Style::Outline, theme);
-                            }
-                            GraphicItem::Rectangle(p) => {
-                                rectangle(plotter, &transform, p, &Style::Outline, theme);
-                            }
-                            GraphicItem::Circle(c) => {
-                                circle(plotter, &transform, c, &Style::Outline, theme);
-                            }
-                            _ => {
-                                log::warn!("unknown graphic item: {:?}", g);
+                    for lib_symbol in &library.units {
+                        if lib_symbol.unit() == 0 || lib_symbol.unit() == symbol.unit {
+                            for g in &lib_symbol.graphics {
+                                match g {
+                                    GraphicItem::Polyline(p) => {
+                                        polyline(plotter, &transform, p, &Style::Outline, theme);
+                                    }
+                                    GraphicItem::Rectangle(p) => {
+                                        rectangle(plotter, &transform, p, &Style::Outline, theme);
+                                    }
+                                    GraphicItem::Circle(c) => {
+                                        circle(plotter, &transform, c, &Style::Outline, theme);
+                                    }
+                                    _ => {
+                                        log::warn!("unknown graphic item: {:?}", g);
+                                    }
+                                }
                             }
                         }
                     }
-                }
+                    for p in &library.pins(symbol.unit) {
+                        pin(
+                            plotter,
+                            &transform,
+                            p,
+                            library.pin_numbers,
+                            library.pin_names,
+                            library.pin_names_offset,
+                            library.power,
+                            &Style::Outline,
+                            theme,
+                        );
+                    }
+                },
+                SchemaItem::Wire(wire) => {
+                    outline!(self, wire, plotter);
+                    let pts1 = wire.pts.0.first().expect("pts[0] should exist");
+                    let pts2 = wire.pts.0.get(1).expect("pts[0] should exist");
+                    plotter.move_to(*pts1);
+                    plotter.line_to(*pts2);
+                    plotter.stroke(Paint {
+                        color: theme.color(wire.stroke.color, Style::Wire),
+                        fill: None,
+                        width: theme.width(wire.stroke.width, Style::Wire),
+                    });
+                },
+                SchemaItem::NoConnect(nc) => {
+                    outline!(self, nc, plotter);
+                    let transform = Transform::new().translation(nc.pos.into());
+                    let r = transform.transform(&NO_CONNECT_R);
+                    let l = transform.transform(&NO_CONNECT_L);
+
+                    plotter.move_to(Pt {
+                        x: r[[0, 0]],
+                        y: r[[0, 1]],
+                    });
+                    plotter.line_to(Pt {
+                        x: r[[1, 0]],
+                        y: r[[1, 1]],
+                    });
+                    plotter.stroke(Paint {
+                        color: theme.color(None, Style::NoConnect),
+                        fill: None,
+                        width: theme.width(0.0, Style::NoConnect),
+                    });
+
+                    plotter.move_to(Pt {
+                        x: l[[0, 0]],
+                        y: l[[0, 1]],
+                    });
+                    plotter.line_to(Pt {
+                        x: l[[1, 0]],
+                        y: l[[1, 1]],
+                    });
+                    plotter.stroke(Paint {
+                        color: theme.color(None, Style::NoConnect),
+                        fill: None,
+                        width: theme.width(0.0, Style::NoConnect),
+                    });
+                },
+                SchemaItem::Junction(junction) => {
+                    outline!(self, junction, plotter);
+                    plotter.circle(
+                        junction.pos.into(),
+                        if junction.diameter == 0.0 {
+                            el::JUNCTION_DIAMETER / 2.0
+                        } else {
+                            junction.diameter / 2.0
+                        },
+                        Paint {
+                            color: theme.color(None, Style::Junction),
+                            fill: None,
+                            width: theme.width(0.0, Style::Junction),
+                        },
+                    );
+                },
+                SchemaItem::LocalLabel(label) => {
+                    outline!(self, label, plotter);
+                    let text_pos: Array2<f32> = if label.pos.angle == 0.0 {
+                        arr2(&[[label.pos.x + 1.0, label.pos.y]])
+                    } else if label.pos.angle == 90.0 {
+                        arr2(&[[label.pos.x, label.pos.y - 1.0]])
+                    } else if label.pos.angle == 180.0 {
+                        arr2(&[[label.pos.x - 1.0, label.pos.y]])
+                    } else {
+                        arr2(&[[label.pos.x, label.pos.y + 1.0]])
+                    };
+                    let text_angle = if label.pos.angle >= 180.0 {
+                        label.pos.angle - 180.0
+                    } else {
+                        label.pos.angle
+                    };
+                    plotter.text(
+                        &label.text,
+                        text_pos.ndarray(),
+                        FontEffects {
+                            angle: text_angle,
+                            anchor: label.effects.anchor(),
+                            baseline: label.effects.baseline(),
+                            face: theme.face(), //TODO label.effects.font.face.clone().unwrap(),
+                            size: theme.font_size(label.effects.font.size, Style::Label).0,
+                            color: theme.color(label.effects.font.color, Style::Property),
+                        },
+                    );
+                },
+                SchemaItem::GlobalLabel(label) => {
+                    outline!(self, label, plotter);
+                    //let angle: f64 = utils::angle(item.item).unwrap();
+                    //let pos: Array1<f64> = utils::at(.item).unwrap();
+                    let text_pos: Array2<f32> = if label.pos.angle == 0.0 {
+                        arr2(&[[label.pos.x + 1.0, label.pos.y]])
+                    } else if label.pos.angle == 90.0 {
+                        arr2(&[[label.pos.x, label.pos.y - 1.0]])
+                    } else if label.pos.angle == 180.0 {
+                        arr2(&[[label.pos.x - 1.0, label.pos.y]])
+                    } else {
+                        arr2(&[[label.pos.x, label.pos.y + 1.0]])
+                    };
+                    let text_angle = if label.pos.angle >= 180.0 {
+                        label.pos.angle - 180.0
+                    } else {
+                        label.pos.angle
+                    };
+                    plotter.text(
+                        &label.text,
+                        text_pos.ndarray(),
+                        FontEffects {
+                            angle: text_angle,
+                            anchor: label.effects.anchor(),
+                            baseline: label.effects.baseline(),
+                            face: theme.face(), //TODO label.effects.font.face.clone().unwrap(),
+                            size: theme.font_size(label.effects.font.size, Style::Label).0,
+                            color: theme.color(label.effects.font.color, Style::Property),
+                        },
+                    );
+
+                    //if item.global {
+                    //    let mut outline = LabelElement::make_label(size);
+                    //    if angle != 0.0 {
+                    //        let theta = angle.to_radians();
+                    //        let rot = arr2(&[[theta.cos(), -theta.sin()], [theta.sin(), theta.cos()]]);
+                    //        outline = outline.dot(&rot);
+                    //    }
+                    //    outline = outline + pos.clone();
+                    //    plot_items.push(PlotItem::Polyline(
+                    //        10,
+                    //        Polyline::new(
+                    //            outline,
+                    //            theme.get_stroke(
+                    //                Stroke::new(),
+                    //                &[Style::GlobalLabel, Style::Fill(FillType::Background)],
+                    //            ),
+                    //            Some(LineCap::Round),
+                    //            None,
+                    //        ),
+                    //    ));
+                    //}
+                },
+                _ => log::error!("plotting item not supported: {:?}", item),
             }
-            for p in &library.pins(symbol.unit) {
-                pin(
-                    plotter,
-                    &transform,
-                    p,
-                    library.pin_numbers,
-                    library.pin_names,
-                    library.pin_names_offset,
-                    library.power,
-                    &Style::Outline,
-                    theme,
-                );
-            }
         }
-        for wire in &self.wires {
-            outline!(self, wire, plotter);
-            let pts1 = wire.pts.0.first().expect("pts[0] should exist");
-            let pts2 = wire.pts.0.get(1).expect("pts[0] should exist");
-            plotter.move_to(*pts1);
-            plotter.line_to(*pts2);
-            plotter.stroke(Paint {
-                color: theme.color(wire.stroke.color, Style::Wire),
-                fill: None,
-                width: theme.width(wire.stroke.width, Style::Wire),
-            });
-        }
-        for nc in &self.no_connects {
-            outline!(self, nc, plotter);
-            let transform = Transform::new().translation(nc.pos.into());
-            let r = transform.transform(&NO_CONNECT_R);
-            let l = transform.transform(&NO_CONNECT_L);
-
-            plotter.move_to(Pt {
-                x: r[[0, 0]],
-                y: r[[0, 1]],
-            });
-            plotter.line_to(Pt {
-                x: r[[1, 0]],
-                y: r[[1, 1]],
-            });
-            plotter.stroke(Paint {
-                color: theme.color(None, Style::NoConnect),
-                fill: None,
-                width: theme.width(0.0, Style::NoConnect),
-            });
-
-            plotter.move_to(Pt {
-                x: l[[0, 0]],
-                y: l[[0, 1]],
-            });
-            plotter.line_to(Pt {
-                x: l[[1, 0]],
-                y: l[[1, 1]],
-            });
-            plotter.stroke(Paint {
-                color: theme.color(None, Style::NoConnect),
-                fill: None,
-                width: theme.width(0.0, Style::NoConnect),
-            });
-        }
-        for junction in &self.junctions {
-            outline!(self, junction, plotter);
-            plotter.circle(
-                junction.pos.into(),
-                if junction.diameter == 0.0 {
-                    el::JUNCTION_DIAMETER / 2.0
-                } else {
-                    junction.diameter / 2.0
+ 
+        if cfg!(debug_assertions) {
+            let outline = self.outline()?;
+            plotter.rect(
+                Rect {
+                    start: outline.start,
+                    end: Pt {
+                        x: outline.end.x - outline.start.x,
+                        y: outline.end.y - outline.start.y,
+                    },
                 },
-                Paint {
-                    color: theme.color(None, Style::Junction),
-                    fill: None,
-                    width: theme.width(0.0, Style::Junction),
-                },
+                Paint::red(),
             );
         }
-        for label in &self.local_labels {
-            outline!(self, label, plotter);
-            let text_pos: Array2<f32> = if label.pos.angle == 0.0 {
-                arr2(&[[label.pos.x + 1.0, label.pos.y]])
-            } else if label.pos.angle == 90.0 {
-                arr2(&[[label.pos.x, label.pos.y - 1.0]])
-            } else if label.pos.angle == 180.0 {
-                arr2(&[[label.pos.x - 1.0, label.pos.y]])
-            } else {
-                arr2(&[[label.pos.x, label.pos.y + 1.0]])
-            };
-            let text_angle = if label.pos.angle >= 180.0 {
-                label.pos.angle - 180.0
-            } else {
-                label.pos.angle
-            };
-            plotter.text(
-                &label.text,
-                text_pos.ndarray(),
-                FontEffects {
-                    angle: text_angle,
-                    anchor: label.effects.anchor(),
-                    baseline: label.effects.baseline(),
-                    face: theme.face(), //TODO label.effects.font.face.clone().unwrap(),
-                    size: theme.font_size(label.effects.font.size, Style::Label).0,
-                    color: theme.color(label.effects.font.color, Style::Property),
-                },
-            );
-        }
-
-        for label in &self.global_labels {
-            outline!(self, label, plotter);
-            //let angle: f64 = utils::angle(item.item).unwrap();
-            //let pos: Array1<f64> = utils::at(.item).unwrap();
-            let text_pos: Array2<f32> = if label.pos.angle == 0.0 {
-                arr2(&[[label.pos.x + 1.0, label.pos.y]])
-            } else if label.pos.angle == 90.0 {
-                arr2(&[[label.pos.x, label.pos.y - 1.0]])
-            } else if label.pos.angle == 180.0 {
-                arr2(&[[label.pos.x - 1.0, label.pos.y]])
-            } else {
-                arr2(&[[label.pos.x, label.pos.y + 1.0]])
-            };
-            let text_angle = if label.pos.angle >= 180.0 {
-                label.pos.angle - 180.0
-            } else {
-                label.pos.angle
-            };
-            plotter.text(
-                &label.text,
-                text_pos.ndarray(),
-                FontEffects {
-                    angle: text_angle,
-                    anchor: label.effects.anchor(),
-                    baseline: label.effects.baseline(),
-                    face: theme.face(), //TODO label.effects.font.face.clone().unwrap(),
-                    size: theme.font_size(label.effects.font.size, Style::Label).0,
-                    color: theme.color(label.effects.font.color, Style::Property),
-                },
-            );
-
-            //if item.global {
-            //    let mut outline = LabelElement::make_label(size);
-            //    if angle != 0.0 {
-            //        let theta = angle.to_radians();
-            //        let rot = arr2(&[[theta.cos(), -theta.sin()], [theta.sin(), theta.cos()]]);
-            //        outline = outline.dot(&rot);
-            //    }
-            //    outline = outline + pos.clone();
-            //    plot_items.push(PlotItem::Polyline(
-            //        10,
-            //        Polyline::new(
-            //            outline,
-            //            theme.get_stroke(
-            //                Stroke::new(),
-            //                &[Style::GlobalLabel, Style::Fill(FillType::Background)],
-            //            ),
-            //            Some(LineCap::Round),
-            //            None,
-            //        ),
-            //    ));
-            //}
-        }
-        let outline = self.outline()?;
-        plotter.rect(
-            Rect {
-                start: outline.start,
-                end: Pt {
-                    x: outline.end.x - outline.start.x,
-                    y: outline.end.y - outline.start.y,
-                },
-            },
-            Paint::red(),
-        );
         Ok(())
     }
 }

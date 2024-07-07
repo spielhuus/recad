@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use {
     pcb::{Footprint, Layer, Net, Segment},
-    schema::LibrarySymbol,
+    symbols::LibrarySymbol,
     sexp::{parser::SexpParser, SexpTree},
 };
 
@@ -13,6 +13,10 @@ pub mod netlist;
 pub mod pcb;
 pub mod plot;
 pub mod schema;
+pub mod footprint;
+pub mod symbols;
+mod symbols_reader;
+mod symbols_writer;
 mod schema_reader;
 mod schema_writer;
 mod schema_ploter;
@@ -77,22 +81,10 @@ pub struct Schema {
     pub generator_version: Option<String>,
     pub paper: gr::PaperSize,
     pub title_block: gr::TitleBlock,
-    pub library_symbols: Vec<schema::LibrarySymbol>,
-    pub junctions: Vec<schema::Junction>,
-    pub no_connects: Vec<schema::NoConnect>,
-    pub wires: Vec<schema::Wire>,
-    //pub wires_and_buses: Vec<WireAndBus>,
-    //pub images: Vec<Image>,
-    //pub graphical_lines: Vec<GraphicalLine>,
-    pub graphical_texts: Vec<Text>,
-    pub local_labels: Vec<schema::LocalLabel>,
-    pub global_labels: Vec<schema::GlobalLabel>,
-    pub symbols: Vec<schema::Symbol>,
-    pub busses: Vec<Bus>,
-    pub bus_entries: Vec<BusEntry>,
-    pub polylines: Vec<Polyline>,
-    //pub hierarchical_sheets: Vec<HierarchicalSheet>,
-    //pub root_sheet_instances: Vec<RootSheetInstance>,
+    pub library_symbols: Vec<LibrarySymbol>,
+
+    pub items: Vec<SchemaItem>,
+    pub sheet_instances: Vec<Instance>,
     
     ///attributes for the builder.
     grid: f32,
@@ -153,8 +145,8 @@ pub struct SymbolLibrary {
 }
 
 use plot::{theme::Theme, Plotter};
-use schema::{Bus, BusEntry, Polyline, Text};
-use sexp::{constants::el, SexpValue};
+use schema::{Instance, SchemaItem};
+use sexp::{builder::Builder, constants::el, SexpValue};
 
 impl SymbolLibrary {
     ///Load a symbol from the symbol library, the name is the combination
@@ -188,35 +180,10 @@ pub trait Drawer<T, F> {
     fn draw(self, item: T) -> F;
 }
 
-//#[derive(Debug, PartialEq, PartialOrd, Clone)]
-//pub struct ImageCommand {
-//    pub filename: String,
-//}
-//
-//impl ImageCommand {
-//    pub fn new<S>(filename: S) -> Self
-//    where
-//        S: Into<String>,
-//    {
-//        Self {
-//            filename: filename.into(),
-//        }
-//    }
-//
-//    pub(crate) fn command(&self) -> Result<Vec<u8>, Error> {
-//        let mut image_command = Vec::new();
-//        for c in self.filename.chars() {
-//            if (c == '"') || (c == '\\') || (c == '\n') {
-//                return Err(Error(String::from("image"), String::from("Invalid character found!".to_string())));
-//            }
-//            image_command.push(c);
-//        }
-//
-//        Ok(image_command)
-//    }
-//}
-
-
 pub trait Plot {
     fn plot(self, plotter: &mut impl Plotter, theme: &Theme) -> Result<(), Error>;
+}
+
+trait SexpWrite {
+    fn write(&self, builder: &mut Builder) -> Result<(), Error>;
 }

@@ -1,10 +1,10 @@
 use crate::{
-    gr::{self, Color, PaperSize, Property},
+    gr::{self, Arc, Circle, Color, GraphicItem, Line, PaperSize, Polyline, Property, Rectangle},
     schema::{
-        Bus, BusEntry, ElectricalTypes, GlobalLabel, Instance, Junction, LibrarySymbol, LocalLabel,
-        NoConnect, Pin, PinGraphicalStyle, PinProperty, Polyline, Symbol, Text, Wire,
+        Bus, BusEntry, ConnectionType, GlobalLabel, HierarchicalLabel, HierarchicalPin, HierarchicalSheet, Instance, Junction, LocalLabel, NetclassFlag, NoConnect, SchemaItem, Symbol, Text, TextBox, Wire
     },
     sexp::{constants::el, Sexp, SexpQuery, SexpString, SexpStringList, SexpTree, SexpValue},
+    symbols::{ElectricalTypes, LibrarySymbol, Pin, PinGraphicalStyle, PinProperty},
     Error, Schema,
 };
 
@@ -27,28 +27,25 @@ impl std::convert::From<SexpTree> for Result<Schema, Error> {
                 "generator_version" => schema.generator_version = node.get(0),
                 "version" => schema.version = node.get(0).unwrap(),
                 el::JUNCTION => schema
-                    .junctions
-                    .push(Into::<Result<Junction, Error>>::into(node)?),
+                    .items
+                    .push(SchemaItem::Junction(Into::<Result<Junction, Error>>::into(node)?)),
                 el::PAPER => schema.paper = PaperSize::from(&SexpString::get(node, 0).unwrap()),
                 el::WIRE => {
-                    schema.wires.push(Into::<Result<Wire, Error>>::into(node)?);
+                    schema.items.push(SchemaItem::Wire(Into::<Result<Wire, Error>>::into(node)?));
                 }
-                el::BUS => schema.busses.push(Into::<Result<Bus, Error>>::into(node)?),
+                el::BUS => schema.items.push(SchemaItem::Bus(Into::<Result<Bus, Error>>::into(node)?)),
                 el::BUS_ENTRY => schema
-                    .bus_entries
-                    .push(Into::<Result<BusEntry, Error>>::into(node)?),
+                    .items
+                    .push(SchemaItem::BusEntry(Into::<Result<BusEntry, Error>>::into(node)?)),
                 el::LABEL => schema
-                    .local_labels
-                    .push(Into::<Result<LocalLabel, Error>>::into(node)?),
+                    .items
+                    .push(SchemaItem::LocalLabel(Into::<Result<LocalLabel, Error>>::into(node)?)),
                 el::GLOBAL_LABEL => schema
-                    .global_labels
-                    .push(Into::<Result<GlobalLabel, Error>>::into(node)?),
+                    .items
+                    .push(SchemaItem::GlobalLabel(Into::<Result<GlobalLabel, Error>>::into(node)?)),
                 el::NO_CONNECT => schema
-                    .no_connects
-                    .push(Into::<Result<NoConnect, Error>>::into(node)?),
-                el::TEXT => schema
-                    .graphical_texts
-                    .push(Into::<Result<Text, Error>>::into(node)?),
+                    .items
+                    .push(SchemaItem::NoConnect(Into::<Result<NoConnect, Error>>::into(node)?)),
                 el::TITLE_BLOCK => schema.title_block = node.into(),
                 el::LIB_SYMBOLS => {
                     schema.library_symbols = node
@@ -56,14 +53,120 @@ impl std::convert::From<SexpTree> for Result<Schema, Error> {
                         .map(|s| Into::<Result<LibrarySymbol, Error>>::into(s).unwrap())
                         .collect()
                 }
-                el::SYMBOL => schema.symbols.push(node.into()),
-                el::POLYLINE => schema
-                    .polylines
-                    .push(Into::<Result<Polyline, Error>>::into(node)?),
+                el::SYMBOL => schema.items.push(SchemaItem::Symbol(node.into())),
+                el::CIRCLE => schema.items.push(SchemaItem::Circle(Into::<
+                    Result<Circle, Error>,
+                >::into(
+                    node
+                )?)),
+                el::POLYLINE => {
+                    schema.items.push(SchemaItem::Polyline(
+                        Into::<Result<Polyline, Error>>::into(node)?,
+                    ))
+                }
+                el::RECTANGLE => {
+                    schema.items.push(SchemaItem::Rectangle(
+                        Into::<Result<Rectangle, Error>>::into(node)?,
+                    ))
+                }
+                el::ARC => schema
+                    .items
+                    .push(SchemaItem::Arc(Into::<Result<Arc, Error>>::into(node)?)),
+                el::TEXT => schema
+                    .items
+                    .push(SchemaItem::Text(Into::<Result<Text, Error>>::into(node)?)),
+                el::TEXT_BOX => schema
+                    .items
+                    .push(SchemaItem::TextBox(Into::<Result<TextBox, Error>>::into(node)?)),
+                el::SHEET => schema
+                    .items
+                    .push(SchemaItem::HierarchicalSheet(Into::<Result<HierarchicalSheet, Error>>::into(node)?)),
+                el::HIERARCHICAL_LABEL => schema
+                    .items
+                    .push(SchemaItem::HierarchicalLabel(Into::<Result<HierarchicalLabel, Error>>::into(node)?)),
+                el::NETCLASS_FLAG => schema
+                    .items
+                    .push(SchemaItem::NetclassFlag(Into::<Result<NetclassFlag, Error>>::into(node)?)),
+                el::SHEET_INSTANCES => {
+                    let path = node.query(el::PATH).next().unwrap();
+                    schema.sheet_instances = vec![Instance {
+                        project: String::new(),
+                        path: path.get(0).expect("mandatory field"),
+                        reference: path.first("page").expect("mandatory field"),
+                        unit: 0,
+                    }]
+                }
                 _ => log::error!("unknown root node: {:?}", node.name),
             }
         }
         Ok(schema)
+    }
+}
+
+impl std::convert::From<&Sexp> for Result<HierarchicalPin, Error> {
+    fn from(sexp: &Sexp) -> Result<HierarchicalPin, Error> {
+        Ok(HierarchicalPin {
+            name: SexpString::get(sexp, 0).unwrap(),
+            connection_type: ConnectionType::from(SexpString::get(sexp, 1).unwrap()),
+            pos: sexp.into(),
+            effects: sexp.into(),
+            uuid: error_if_none!(sexp.first(el::UUID), "uuid is mandatory")?,
+        })
+    }
+}
+
+impl std::convert::From<&Sexp> for Result<HierarchicalSheet, Error> {
+    fn from(sexp: &Sexp) -> Result<HierarchicalSheet, Error> {
+        let size = sexp.query(el::SIZE).next().unwrap(); //TODO create error
+        Ok(HierarchicalSheet {
+            pos: sexp.into(),
+            width: size.get(0).unwrap(),
+            height: size.get(1).unwrap(),
+            fields_autoplaced: SexpString::first(sexp, el::FIELDS_AUTOPLACED)
+                .unwrap_or(el::YES.to_string())
+                == el::YES,
+            stroke: sexp.into(),
+            fill: Into::<Result<gr::FillType, Error>>::into(sexp).unwrap(),
+            props: properties(sexp),
+            pins: sexp.query(el::PIN).map(|p| { 
+                Into::<Result<HierarchicalPin, Error>>::into(p).unwrap()
+            }).collect(),
+            instances: vec![], //TODO todo!(),
+            uuid: error_if_none!(sexp.first(el::UUID), "uuid is mandatory")?,
+        })
+    }
+}
+
+impl std::convert::From<&Sexp> for Result<HierarchicalLabel, Error> {
+    fn from(sexp: &Sexp) -> Result<HierarchicalLabel, Error> {
+        Ok(HierarchicalLabel {
+            text: SexpString::get(sexp, 0).unwrap(),
+            shape: sexp.first(el::SHAPE),
+            pos: sexp.into(),
+            fields_autoplaced: SexpString::first(sexp, el::FIELDS_AUTOPLACED)
+                .unwrap_or(el::YES.to_string())
+                == el::YES,
+            props: properties(sexp),
+            effects: sexp.into(),
+            uuid: error_if_none!(sexp.first(el::UUID), "uuid is mandatory")?,
+        })
+    }
+}
+
+impl std::convert::From<&Sexp> for Result<NetclassFlag, Error> {
+    fn from(sexp: &Sexp) -> Result<NetclassFlag, Error> {
+        Ok(NetclassFlag {
+            name: SexpString::get(sexp, 0).unwrap(),
+            length: sexp.first(el::LENGTH).unwrap(),
+            shape: sexp.first(el::SHAPE),
+            pos: sexp.into(),
+            fields_autoplaced: SexpString::first(sexp, el::FIELDS_AUTOPLACED)
+                .unwrap_or(el::YES.to_string())
+                == el::YES,
+            effects: sexp.into(),
+            props: properties(sexp),
+            uuid: error_if_none!(sexp.first(el::UUID), "uuid is mandatory")?,
+        })
     }
 }
 
@@ -123,7 +226,11 @@ impl std::convert::From<&Sexp> for Result<GlobalLabel, Error> {
             text: error_if_none!(sexp.get(0), "text is mandatory for label.")?,
             shape: sexp.first(el::SHAPE),
             pos: sexp.into(),
+            fields_autoplaced: SexpString::first(sexp, el::FIELDS_AUTOPLACED)
+                .unwrap_or(el::YES.to_string())
+                == el::YES,
             effects: sexp.into(),
+            props: properties(sexp),
             uuid: error_if_none!(sexp.first(el::UUID), "uuid is mandatory")?,
         })
     }
@@ -149,6 +256,24 @@ impl std::convert::From<&Sexp> for Result<NoConnect, Error> {
     }
 }
 
+impl std::convert::From<&Sexp> for Result<gr::FillType, Error> {
+    fn from(sexp: &Sexp) -> Self {
+        if let Some(fill) = sexp.query(el::FILL).next() {
+            if let Some(filltype) = SexpString::first(fill, el::TYPE) {
+                if filltype == el::COLOR {
+                    Ok(gr::FillType::Color(Into::<Result<Color, Error>>::into(fill).unwrap()))
+                } else {
+                    Ok(gr::FillType::from(filltype.as_str()))
+                }
+            } else {
+                Ok(gr::FillType::None)
+            }
+        } else {
+            Ok(gr::FillType::None)
+        }
+    }
+}
+
 impl std::convert::From<&Sexp> for Result<Text, Error> {
     fn from(sexp: &Sexp) -> Self {
         Ok(Text {
@@ -161,6 +286,27 @@ impl std::convert::From<&Sexp> for Result<Text, Error> {
             } else {
                 false
             },
+        })
+    }
+}
+
+impl std::convert::From<&Sexp> for Result<TextBox, Error> {
+    fn from(sexp: &Sexp) -> Self {
+        let size = sexp.query(el::SIZE).next().unwrap(); //TODO create error
+        Ok(TextBox {
+            pos: sexp.into(),
+            text: error_if_none!(sexp.get(0), "text is mandatory for text box.")?,
+            width: size.get(0).unwrap(),
+            height: size.get(1).unwrap(),
+            stroke: sexp.into(),
+            fill: Into::<Result<gr::FillType, Error>>::into(sexp).unwrap(),
+            effects: sexp.into(),
+            exclude_from_sim: if let Some(exclude) = SexpString::first(sexp, el::EXCLUDE_FROM_SIM) {
+                exclude == el::YES
+            } else {
+                false
+            },
+            uuid: error_if_none!(sexp.first(el::UUID), "uuid is mandatory")?,
         })
     }
 }
@@ -178,12 +324,61 @@ fn properties(node: &Sexp) -> Vec<Property> {
         .collect()
 }
 
+impl std::convert::From<&Sexp> for Result<Circle, Error> {
+    fn from(sexp: &Sexp) -> Self {
+        Ok(gr::Circle {
+            center: sexp.query(el::CENTER).next().unwrap().into(),
+            radius: sexp.first(el::RADIUS).unwrap(),
+            stroke: sexp.into(),
+            fill: Into::<Result<gr::FillType, Error>>::into(sexp).unwrap(),
+            uuid: sexp.first(el::UUID),
+        })
+    }
+}
+
+impl std::convert::From<&Sexp> for Result<Line, Error> {
+    fn from(sexp: &Sexp) -> Self {
+        Ok(Line {
+            pts: sexp.into(),
+            stroke: sexp.into(),
+            fill: Into::<Result<gr::FillType, Error>>::into(sexp).unwrap(),
+            uuid: sexp.first(el::UUID),
+        })
+    }
+}
+
 impl std::convert::From<&Sexp> for Result<Polyline, Error> {
     fn from(sexp: &Sexp) -> Self {
         Ok(Polyline {
-            uuid: error_if_none!(sexp.first(el::UUID), "uuid is mandatory")?,
             pts: sexp.into(),
             stroke: sexp.into(),
+            fill: Into::<Result<gr::FillType, Error>>::into(sexp).unwrap(),
+            uuid: sexp.first(el::UUID),
+        })
+    }
+}
+
+impl std::convert::From<&Sexp> for Result<Rectangle, Error> {
+    fn from(sexp: &Sexp) -> Self {
+        Ok(Rectangle {
+            start: sexp.query(el::START).next().unwrap().into(),
+            end: sexp.query(el::END).next().unwrap().into(),
+            stroke: sexp.into(),
+            fill: Into::<Result<gr::FillType, Error>>::into(sexp).unwrap(),
+            uuid: sexp.first(el::UUID),
+        })
+    }
+}
+
+impl std::convert::From<&Sexp> for Result<Arc, Error> {
+    fn from(sexp: &Sexp) -> Self {
+        Ok(Arc {
+            start: sexp.query(el::START).next().unwrap().into(),
+            mid: sexp.query(el::MID).next().unwrap().into(),
+            end: sexp.query(el::END).next().unwrap().into(),
+            stroke: sexp.into(),
+            fill: Into::<Result<gr::FillType, Error>>::into(sexp).unwrap(),
+            uuid: sexp.first(el::UUID),
         })
     }
 }
@@ -237,62 +432,31 @@ impl std::convert::From<&Sexp> for Result<LibrarySymbol, Error> {
             graphics: sexp
                 .nodes()
                 .filter_map(|node| match node.name.as_str() {
-                    el::ARC => Some(gr::GraphicItem::Arc(gr::Arc {
-                        start: node.query(el::START).next().unwrap().into(),
-                        mid: node.query(el::MID).next().unwrap().into(),
-                        end: node.query(el::END).next().unwrap().into(),
-                        stroke: node.into(),
-                        fill: gr::FillType::from(
-                            SexpString::first(node.query(el::FILL).next().unwrap(), el::TYPE)
-                                .unwrap(),
-                        ),
-                    })),
-                    el::CIRCLE => Some(gr::GraphicItem::Circle(gr::Circle {
-                        center: node.query(el::CENTER).next().unwrap().into(),
-                        radius: node.first(el::RADIUS).unwrap(),
-                        stroke: node.into(),
-                        fill: gr::FillType::from(
-                            SexpString::first(node.query(el::FILL).next().unwrap(), el::TYPE)
-                                .unwrap(),
-                        ),
-                    })),
+                    el::ARC => Some(GraphicItem::Arc(
+                        Into::<Result<Arc, Error>>::into(node).unwrap(),
+                    )),
+                    el::CIRCLE => Some(GraphicItem::Circle(
+                        Into::<Result<Circle, Error>>::into(node).unwrap(),
+                    )),
                     el::CURVE => Some(gr::GraphicItem::Curve(gr::Curve {
                         pts: node.into(),
                         stroke: node.into(),
-                        fill: gr::FillType::from(
-                            SexpString::first(node.query(el::FILL).next().unwrap(), el::TYPE)
-                                .unwrap(),
-                        ),
+                        fill: Into::<Result<gr::FillType, Error>>::into(sexp).unwrap(),
                     })),
-                    el::POLYLINE => Some(gr::GraphicItem::Polyline(gr::Polyline {
-                        pts: node.into(),
-                        stroke: node.into(),
-                        fill: gr::FillType::from(
-                            SexpString::first(node.query(el::FILL).next().unwrap(), el::TYPE)
-                                .unwrap(),
-                        ),
-                    })),
-                    el::LINE => Some(gr::GraphicItem::Line(gr::Line {
-                        pts: node.into(),
-                        stroke: node.into(),
-                        fill: gr::FillType::from(
-                            SexpString::first(node.query(el::FILL).next().unwrap(), el::TYPE)
-                                .unwrap(),
-                        ),
-                    })),
-                    el::RECTANGLE => Some(gr::GraphicItem::Rectangle(gr::Rectangle {
-                        start: node.query(el::START).next().unwrap().into(),
-                        end: node.query(el::END).next().unwrap().into(),
-                        stroke: node.into(),
-                        fill: gr::FillType::from(
-                            SexpString::first(node.query(el::FILL).next().unwrap(), el::TYPE)
-                                .unwrap(),
-                        ),
-                    })),
+                    el::POLYLINE => Some(GraphicItem::Polyline(
+                        Into::<Result<Polyline, Error>>::into(node).unwrap(),
+                    )),
+                    el::LINE => Some(GraphicItem::Line(
+                        Into::<Result<Line, Error>>::into(node).unwrap(),
+                    )),
+                    el::RECTANGLE => Some(GraphicItem::Rectangle(
+                        Into::<Result<Rectangle, Error>>::into(node).unwrap(),
+                    )),
                     el::TEXT => Some(gr::GraphicItem::Text(gr::Text {
                         text: node.get(0).expect("text is required"),
                         pos: node.into(),
                         effects: node.into(),
+                        uuid: None,
                     })),
                     _ => {
                         if node.name != el::PIN
@@ -306,7 +470,7 @@ impl std::convert::From<&Sexp> for Result<LibrarySymbol, Error> {
                             && node.name != el::PROPERTY
                             && node.name != el::EXTENDS
                         {
-                            panic!("unknown graphic type: {}", node.name); //TODO
+                            panic!("unknown graphic type: {}", node.name);
                         }
                         None
                     }
@@ -398,6 +562,7 @@ impl std::convert::From<&Sexp> for Symbol {
 
 #[cfg(test)]
 mod tests {
+    use crate::gr::Color;
     use crate::sexp::parser::SexpParser;
     use crate::{
         gr::{Pt, Pts, Stroke, StrokeType, TitleBlock},

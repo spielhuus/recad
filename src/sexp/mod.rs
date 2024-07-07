@@ -9,9 +9,7 @@ use crate::{
     gr::{
         Color, Effects, Font, Justify, Pos, Pt, Pts, Stroke,
         StrokeType, TitleBlock,
-    },
-    pcb::{self, Footprint, FootprintType, FpLine, Net, Pad, PadShape, PadType, Segment},
-    Error, Pcb,
+    }, pcb::{self, Footprint, FootprintType, FpLine, Net, Pad, PadShape, PadType, Segment}, Error, Pcb
 };
 
 use constants::el;
@@ -393,7 +391,11 @@ impl std::convert::From<&Sexp> for Font {
             size: (size.get(0).unwrap(), size.get(1).unwrap()),
             thickness: font.first("tickness"),
             bold: SexpStringList::values(font).contains(&el::BOLD.to_string()), //TODO is an element
-            italic: SexpStringList::values(font).contains(&el::ITALIC.to_string()),
+            italic: if let Some(italic) = font.query(el::ITALIC).next() {
+                SexpString::get(italic, 0).unwrap() == el::YES
+            } else {
+                SexpStringList::values(font).contains(&el::ITALIC.to_string())
+            },
             line_spacing: font.first("spacing"), //TODO check name in sexp file.
             color: None,                         //TODO
         }

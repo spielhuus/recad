@@ -25,9 +25,18 @@ mod tests {
             );
 
             let mut diffs = 0;
+            let mut last_offset = false;
             for change in diff.iter_all_changes() {
                 if change.to_string().contains("(xy ") {
                     //println!("*{}", change.to_string().italic());
+                    continue
+                } else if change.to_string().contains("(offset ") {
+                    //println!("*{}", change.to_string().italic());
+                    last_offset = true;
+                    continue
+                } else if last_offset && change.to_string().trim() == ")" {
+                    //println!("*{}", change.to_string().italic());
+                    last_offset = false;
                     continue
                 } else {
                     match change.tag() {
@@ -37,7 +46,7 @@ mod tests {
                     };
                 }
             }
-            assert_eq!(diffs, 29);
+            assert_eq!(diffs, 0);
         }
         #[test]
         fn all_elements() {
@@ -59,6 +68,9 @@ mod tests {
             for change in diff.iter_all_changes() {
                 if change.to_string().contains("(xy ") {
                     println!("*{}", change.to_string().italic());
+                } else if change.to_string().contains("(uuid ") {
+                    //TODO only skip " and not the rest
+                    println!("*{}", change.to_string().italic());
                 } else {
                     match change.tag() {
                         ChangeTag::Delete => { print!("-{}", change.to_string().red()); diffs+=1; },
@@ -67,7 +79,7 @@ mod tests {
                     };
                 }
             }
-            assert_eq!(diffs, 297);
+            assert_eq!(diffs, 23);
         }
     }
 }

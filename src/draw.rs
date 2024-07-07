@@ -2,7 +2,7 @@
 use std::path::PathBuf;
 
 use crate::{
-    gr::{Effects, Pos, Pt, Pts, Stroke}, math, schema, sexp::constants::el, Drawer, Schema
+    gr::{Effects, Pos, Pt, Pts, Stroke}, math, schema::{self, SchemaItem}, sexp::constants::el, Drawer, Schema
 };
 
 ///Attributes for the elements.
@@ -181,7 +181,7 @@ impl Drawer<Label, Schema> for Schema {
             uuid: crate::uuid!(),
             fields_autoplaced: true,
         };
-        self.local_labels.push(label);
+        self.items.push(SchemaItem::LocalLabel(label));
         self
     }
 }
@@ -207,7 +207,7 @@ impl Drawer<Dot, Schema> for Schema {
             color: None,
             uuid: crate::uuid!(),
         };
-        self.junctions.push(dot);
+        self.items.push(SchemaItem::Junction(dot));
         self
     }
 }
@@ -277,7 +277,7 @@ impl Drawer<Wire, Schema> for Schema {
             uuid: crate::uuid!(),
         };
 
-        self.wires.push(wire);
+        self.items.push(SchemaItem::Wire(wire));
         self.last_pos = At::Pt(to_pos);
         self
     }
@@ -396,7 +396,7 @@ impl Drawer<Symbol, Schema> for Schema {
             &new_symbol,
             lib.pin("2").unwrap(),
         ));
-        self.symbols.push(new_symbol);
+        self.items.push(SchemaItem::Symbol(new_symbol));
         self
     }
 }

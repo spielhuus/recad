@@ -2,42 +2,133 @@ use std::io::Write;
 
 use crate::{
     gr::{Arc, Circle, Color, Effects, FillType, Polyline, Rectangle, Stroke},
-    Error,
+    Error, SexpWrite,
 };
 
 use super::{builder::Builder, constants::el, Sexp, SexpTree};
 
+pub fn write_uuid(builder: &mut Builder, uuid: &Option<String>) {
+    if let Some(uuid) = uuid {
+        builder.push(el::UUID);
+        builder.text(uuid);
+        builder.end();
+    }
+}
 
+impl SexpWrite for Arc {
+    fn write(&self, builder: &mut Builder) -> Result<(), Error> {
+        builder.push(el::ARC);
+        builder.push(el::START);
+        builder.value(&self.start.x.to_string());
+        builder.value(&self.start.y.to_string());
+        builder.end();
+        builder.push(el::MID);
+        builder.value(&self.mid.x.to_string());
+        builder.value(&self.mid.y.to_string());
+        builder.end();
+        builder.push(el::END);
+        builder.value(&self.end.x.to_string());
+        builder.value(&self.end.y.to_string());
+        builder.end();
+        self.stroke.write(builder)?;
+        self.fill.write(builder)?;
+        write_uuid(builder, &self.uuid);
+        builder.end();
+        Ok(())
+    }
+}
+
+impl SexpWrite for Circle {
+    fn write(&self, builder: &mut Builder) -> Result<(), Error> {
+        builder.push(el::CIRCLE);
+        builder.push(el::CENTER);
+        builder.value(&self.center.x.to_string());
+        builder.value(&self.center.y.to_string());
+        builder.end();
+        builder.push(el::RADIUS);
+        builder.value(&self.radius.to_string());
+        builder.end();
+        self.stroke.write(builder)?;
+        self.fill.write(builder)?;
+        write_uuid(builder, &self.uuid);
+        builder.end();
+        Ok(())
+    }
+}
+
+impl SexpWrite for Polyline {
+    fn write(&self, builder: &mut Builder) -> Result<(), Error> {
+        builder.push(el::POLYLINE);
+        builder.push(el::PTS);
+        for pt in &self.pts.0 {
+            builder.push(el::XY);
+            builder.value(&pt.x.to_string());
+            builder.value(&pt.y.to_string());
+            builder.end();
+        }
+        builder.end();
+        self.stroke.write(builder)?;
+        self.fill.write(builder)?;
+        write_uuid(builder, &self.uuid);
+        builder.end();
+        Ok(())
+    }
+}
+
+impl SexpWrite for Rectangle {
+    fn write(&self, builder: &mut Builder) -> Result<(), Error> {
+        builder.push(el::RECTANGLE);
+        builder.push(el::START);
+        builder.value(&self.start.x.to_string());
+        builder.value(&self.start.y.to_string());
+        builder.end();
+        builder.push(el::END);
+        builder.value(&self.end.x.to_string());
+        builder.value(&self.end.y.to_string());
+        builder.end();
+        self.stroke.write(builder)?;
+        self.fill.write(builder)?;
+        write_uuid(builder, &self.uuid);
+        builder.end();
+        Ok(())
+    }
+}
 
 impl Stroke {
     pub fn write(&self, builder: &mut Builder) -> Result<(), Error> {
-        builder.push("stroke");
-        builder.push("width");
+        builder.push(el::STROKE);
+        builder.push(el::WIDTH);
         builder.value(&self.width.to_string());
         builder.end();
         if let Some(stroketype) = &self.stroke_type {
-            builder.push("type");
+            builder.push(el::TYPE);
             builder.value(&stroketype.to_string());
             builder.end();
+        }
+        if let Some(color) = &self.color {
+            color.write(builder)?;
         }
         builder.end();
         Ok(())
     }
 }
 
-impl FillType {
+impl SexpWrite for FillType {
     fn write(&self, builder: &mut Builder) -> Result<(), Error> {
-        builder.push("fill");
-        builder.push("type");
+        builder.push(el::FILL);
+        builder.push(el::TYPE);
         builder.value(&self.to_string());
         builder.end();
+        if let FillType::Color(c) = self {
+            c.write(builder)?;
+        }
         builder.end();
         Ok(())
     }
 }
 
-impl Color {
-    pub fn write(&self, builder: &mut Builder) -> Result<(), Error> {
+impl SexpWrite for Color {
+    fn write(&self, builder: &mut Builder) -> Result<(), Error> {
         match self {
             Color::None => {
                 builder.push(el::COLOR);
@@ -59,7 +150,7 @@ impl Color {
                 builder.value(&r.to_string());
                 builder.value(&g.to_string());
                 builder.value(&b.to_string());
-                builder.value(&a.to_string());
+                builder.value(&(*a as f32 / 255.0).to_string());
                 builder.end();
             }
         }
@@ -101,81 +192,6 @@ impl Effects {
             builder.end();
         }
 
-        builder.end();
-        Ok(())
-    }
-}
-
-impl Circle {
-    pub fn write(&self, builder: &mut Builder) -> Result<(), Error> {
-        builder.push(el::CIRCLE);
-        builder.push(el::CENTER);
-        builder.value(&self.center.x.to_string());
-        builder.value(&self.center.y.to_string());
-        builder.end();
-        builder.push(el::RADIUS);
-        builder.value(&self.radius.to_string());
-        builder.end();
-        self.stroke.write(builder)?;
-        self.fill.write(builder)?;
-        builder.end();
-        Ok(())
-    }
-}
-
-impl Arc {
-    pub fn write(&self, builder: &mut Builder) -> Result<(), Error> {
-        builder.push(el::ARC);
-        builder.push("start");
-        builder.value(&self.start.x.to_string());
-        builder.value(&self.start.y.to_string());
-        builder.end();
-        builder.push("mid");
-        builder.value(&self.mid.x.to_string());
-        builder.value(&self.mid.y.to_string());
-        builder.end();
-        builder.push("end");
-        builder.value(&self.end.x.to_string());
-        builder.value(&self.end.y.to_string());
-        builder.end();
-        self.stroke.write(builder)?;
-        self.fill.write(builder)?;
-        builder.end();
-        Ok(())
-    }
-}
-
-impl Rectangle {
-    pub fn write(&self, builder: &mut Builder) -> Result<(), Error> {
-        builder.push("rectangle");
-        builder.push("start");
-        builder.value(&self.start.x.to_string());
-        builder.value(&self.start.y.to_string());
-        builder.end();
-        builder.push("end");
-        builder.value(&self.end.x.to_string());
-        builder.value(&self.end.y.to_string());
-        builder.end();
-        self.stroke.write(builder)?;
-        self.fill.write(builder)?;
-        builder.end();
-        Ok(())
-    }
-}
-
-impl Polyline {
-    pub fn write(&self, builder: &mut Builder) -> Result<(), Error> {
-        builder.push(el::POLYLINE);
-        builder.push(el::PTS);
-        for pt in &self.pts.0 {
-            builder.push(el::XY);
-            builder.value(&pt.x.to_string());
-            builder.value(&pt.y.to_string());
-            builder.end();
-        }
-        builder.end();
-        self.stroke.write(builder)?;
-        self.fill.write(builder)?;
         builder.end();
         Ok(())
     }

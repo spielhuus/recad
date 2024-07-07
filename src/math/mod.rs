@@ -6,6 +6,7 @@ pub mod fonts;
 pub use transform::Transform;
 
 use crate::gr::Rect;
+use crate::symbols::{LibrarySymbol, Pin};
 use crate::{
     gr::{Pos, Pt, Pts},
     schema,
@@ -78,7 +79,7 @@ impl ToNdarray<Array2<f32>, Rect> for Array2<f32> {
 }
 
 ///Calculate the position of a pin in a symbol.
-pub fn pin_position(symbol: &schema::Symbol, pin: &schema::Pin) -> Pt {
+pub fn pin_position(symbol: &schema::Symbol, pin: &Pin) -> Pt {
     let pos: Array2<f32> = pin.pos.ndarray();
     let transform = Transform::new()
         .translation(Pt {
@@ -94,7 +95,7 @@ pub fn pin_position(symbol: &schema::Symbol, pin: &schema::Pin) -> Pt {
     }
 }
 
-pub fn place_properties(lib: &schema::LibrarySymbol, symbol: &mut schema::Symbol) {
+pub fn place_properties(lib: &LibrarySymbol, symbol: &mut schema::Symbol) {
     //let bbox = symbol.outline();
 
     let pins = lib.pins(symbol.unit);

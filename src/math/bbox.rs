@@ -1,7 +1,10 @@
 use ndarray::{arr2, Array, Array2, ArrayView};
 
 use crate::{
-    gr::{Effects, Justify, Pos, Property, Pt, Rect}, schema::{GlobalLabel, Junction, LocalLabel, NoConnect, Symbol, Wire}, sexp::constants::el, Error, Schema
+    gr::{Effects, Justify, Pos, Property, Pt, Rect},
+    schema::{GlobalLabel, Junction, LocalLabel, NoConnect, Symbol, Wire},
+    sexp::constants::el,
+    Error, Schema,
 };
 
 use super::{pin_position, ToNdarray, Transform};
@@ -214,7 +217,8 @@ impl Bbox for Symbol {
                                 .transform(&arr2(&[[
                                     circle.center.x - circle.radius,
                                     circle.center.y - circle.radius,
-                                ]])).row(0)
+                                ]]))
+                                .row(0),
                         )
                         .expect("insertion failed");
                         pts.push_row(
@@ -222,7 +226,8 @@ impl Bbox for Symbol {
                                 .transform(&arr2(&[[
                                     circle.center.x + circle.radius,
                                     circle.center.y + circle.radius,
-                                ]])).row(0)
+                                ]]))
+                                .row(0),
                         )
                         .expect("insertion failed");
                     }
@@ -266,7 +271,7 @@ impl Schema {
     /// Returns the outline of this [`Schema`].
     pub fn outline(&self) -> Result<Rect, Error> {
         let mut pts = Array::zeros((0, 2));
-        for item in self.iter() {
+        for item in &self.items {
             match item {
                 crate::schema::SchemaItem::Junction(junction) => {
                     let bound = junction.outline(self)?.ndarray();
@@ -320,6 +325,7 @@ impl Schema {
                         }
                     }
                 }
+                _ => {}
             }
         }
         Ok(calculate(pts))

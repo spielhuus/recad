@@ -2,10 +2,10 @@
 ///Constants for the element names.
 pub mod el {
     pub const ARC: &str = "arc";
-    pub const BUS: &str = "bus";
-    pub const BUS_ENTRY: &str = "bus_entry";
     pub const AT: &str = "at";
     pub const BOLD: &str = "bold";
+    pub const BUS: &str = "bus";
+    pub const BUS_ENTRY: &str = "bus_entry";
     pub const CENTER: &str = "center";
     pub const CIRCLE: &str = "circle";
     pub const COLOR: &str = "color";
@@ -26,6 +26,7 @@ pub mod el {
     pub const GENERATOR: &str = "generator";
     pub const GLOBAL_LABEL: &str = "global_label";
     pub const HIDE: &str = "hide";
+    pub const HIERARCHICAL_LABEL: &str = "hierarchical_label";
     pub const INSTANCES: &str = "instances";
     pub const IN_BOM: &str = "in_bom";
     pub const ITALIC: &str = "italic";
@@ -42,6 +43,8 @@ pub mod el {
     pub const MIRROR: &str = "mirror";
     pub const NAME: &str = "name";
     pub const NET: &str = "net";
+    pub const NETCLASS_FLAG: &str = "netclass_flag";
+    pub const NO: &str = "no";
     pub const NO_CONNECT: &str = "no_connect";
     pub const NO_CONNECT_SIZE: f32 = 0.635;
     pub const NUMBER: &str = "number";
@@ -66,6 +69,7 @@ pub mod el {
     pub const SEXP: &str = "sexp";
     pub const SHAPE: &str = "shape";
     pub const SHEET: &str = "sheet";
+    pub const SHEET_INSTANCES: &str = "sheet_instances";
     pub const SIZE: &str = "size";
     pub const START: &str = "start";
     pub const STROKE: &str = "stroke";
@@ -73,6 +77,7 @@ pub mod el {
     pub const SYMBOL_UNIT: &str = "unit";
     pub const TAGS: &str = "tags";
     pub const TEXT: &str = "text";
+    pub const TEXT_BOX: &str = "text_box";
     pub const TITLE_BLOCK: &str = "title_block";
     pub const TITLE_BLOCK_COMMENT: &str = "comment";
     pub const TITLE_BLOCK_COMPANY: &str = "company";
@@ -86,5 +91,4 @@ pub mod el {
     pub const WIRE: &str = "wire";
     pub const XY: &str = "xy";
     pub const YES: &str = "yes";
-    pub const NO: &str = "no";
 }

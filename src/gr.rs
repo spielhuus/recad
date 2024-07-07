@@ -4,7 +4,7 @@ use std::fmt;
 
 use crate::sexp::constants::el;
 
-///The Pos token defines the positional coordinates and rotation of an object.
+///`Pos` sets the location (x, y) and orientation of an object.
 #[derive(Debug, Copy, Clone, Default)]
 pub struct Pos {
     pub x: f32,
@@ -27,7 +27,7 @@ impl std::hash::Hash for Pos {
     }
 }
 
-///The ```Pt```  defines the positional coordinates object.
+///`Pt` defines the positional coordinates of an object.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Pt {
     pub x: f32,
@@ -117,6 +117,7 @@ pub enum FillType {
     None,
     Background,
     Outline,
+    Color(Color),
 }
 
 impl From<&str> for FillType {
@@ -125,18 +126,7 @@ impl From<&str> for FillType {
             "background" => FillType::Background,
             "outline" => FillType::Outline,
             "none" => FillType::None,
-            _ => panic!("fill type: {}", s),
-        }
-    }
-}
-
-impl From<String> for FillType {
-    fn from(s: String) -> Self {
-        match s.as_str() {
-            "background" => FillType::Background,
-            "outline" => FillType::Outline,
-            "none" => FillType::None,
-            _ => panic!("fill type: {}", s),
+            _ => panic!("unknown fill type: {}", s),
         }
     }
 }
@@ -150,10 +140,12 @@ impl fmt::Display for FillType {
                 FillType::Background => "background",
                 FillType::None => "none",
                 FillType::Outline => "outline",
+                FillType::Color(_) => "color",
             }
         )
     }
 }
+
 ///The property token defines a symbol property when used inside a symbol definition.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Property {
@@ -187,32 +179,42 @@ pub enum GraphicItem {
     Text(Text),
 }
 
+///A `Polyline` in the schema or pcb
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Polyline {
-    //The COORDINATE_POINT_LIST defines the list of X/Y coordinates of the
-    //line(s). There must be a minimum of two points.
+    ///The COORDINATE_POINT_LIST defines the list of X/Y coordinates of the
+    ///line(s). There must be a minimum of two points.
     pub pts: Pts,
-    //The STROKE_DEFINITION defines how the polygon formed by the lines
-    //outline is drawn.
+    ///The STROKE_DEFINITION defines how the polygon formed by the lines
+    ///outline is drawn.
     pub stroke: Stroke,
-    //The fill token attributes define how the polygon formed by the lines is filled.
+    ///The fill token attributes define how the polygon formed by the lines is filled.
     pub fill: FillType,
+    /// Optional Universally unique identifier for the junction.
+    /// This is used to identify the polyline on a schema.
+    pub uuid: Option<String>,
 }
 
+///An `Arc` in the schema or pcb
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Arc {
-    //The start token defines the coordinates of start point of the arc.
+    ///The start token defines the coordinates of start point of the arc.
     pub start: Pt,
-    //The mid token defines the coordinates of mid point of the arc.
+    ///The mid token defines the coordinates of mid point of the arc.
     pub mid: Pt,
-    //The end token defines the coordinates of end point of the arc.
+    ///The end token defines the coordinates of end point of the arc.
     pub end: Pt,
-    //The STROKE_DEFINITION defines how the arc outline is drawn.
+    ///The STROKE_DEFINITION defines how the arc outline is drawn.
     pub stroke: Stroke,
-    //The fill token attributes define how the arc is filled.
+    ///The fill token attributes define how the arc is filled.
     pub fill: FillType,
+    /// Optional Universally unique identifier for the junction.
+    /// This is used to identify the arc on a schema.
+    pub uuid: Option<String>,
+
 }
 
+///A `Circle` in the schema or pcb
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Circle {
     //The center token defines the coordinates of center point of the circle.
@@ -223,6 +225,9 @@ pub struct Circle {
     pub stroke: Stroke,
     //The FILL_DEFINTION defines how the circle is filled.
     pub fill: FillType,
+    /// Optional Universally unique identifier for the junction.
+    /// This is used to identify the circle on a schema.
+    pub uuid: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -243,6 +248,9 @@ pub struct Line {
     pub stroke: Stroke,
     //The fill token attributes define how the polygon formed by the lines is filled.
     pub fill: FillType,
+    /// Optional Universally unique identifier for the junction.
+    /// This is used to identify the circle on a schema.
+    pub uuid: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -255,6 +263,9 @@ pub struct Rectangle {
     pub stroke: Stroke,
     //The FILL_DEFINTION defines how the rectangle is filled.
     pub fill: FillType,
+    /// Optional Universally unique identifier for the junction.
+    /// This is used to identify the circle on a schema.
+    pub uuid: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -265,6 +276,9 @@ pub struct Text {
     pub pos: Pos,
     //The TEXT_EFFECTS defines how the text is displayed.
     pub effects: Effects,
+    /// Optional Universally unique identifier for the junction.
+    /// This is used to identify the circle on a schema.
+    pub uuid: Option<String>,
 }
 
 ///All text objects can have an optional effects section
