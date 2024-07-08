@@ -53,11 +53,17 @@ impl From<Pos> for Pt {
     }
 }
 
-///The ```Pts``` token defines a list of X/Y coordinate points.
+impl fmt::Display for Pt {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:.2}x{:.2}", self.x, self.y)
+    }
+}
+
+///The `Pts` token defines a list of X/Y coordinate points.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Pts(pub Vec<Pt>);
 
-///The ```Rect``` token defines the start end enpoint of a Rectangle.
+///The `Rect` token defines the start end enpoint of a Rectangle.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Rect {
     pub start: Pt,

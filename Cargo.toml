@@ -9,6 +9,7 @@ svg  = "0.17"
 itertools = "0.13"
 lazy_static = "1.4"
 uuid = { version = "1.8", features = ["v4", "fast-rng", "macro-diagnostics"] }
+indexmap = "2.2.6"
 
 fontdue = "0.8"
 rust-fontconfig = "0.1.6"

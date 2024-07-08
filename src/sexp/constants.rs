@@ -50,6 +50,7 @@ pub mod el {
     pub const NUMBER: &str = "number";
     pub const OFFSET: &str = "offset";
     pub const ON_BOARD: &str = "on_board";
+    pub const PAGE: &str = "page";
     pub const PAPER: &str = "paper";
     pub const PATH: &str = "path";
     pub const PIN: &str = "pin";

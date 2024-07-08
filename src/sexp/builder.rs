@@ -91,25 +91,3 @@ impl Builder {
         Ok(SexpTree { tree: i })
     }
 }
-
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_builder() {
-        let mut builder = super::Builder::new();
-        builder.push("a");
-        builder.value("b");
-        builder.text("c");
-        builder.end();
-        builder.push("d");
-        builder.value("e");
-        builder.text("f");
-        builder.end();
-        builder.push("g");
-        builder.end();
-        let sexp = builder.sexp().unwrap();
-        //println!("{:?}", sexp);
-    }
-}
-

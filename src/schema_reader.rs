@@ -562,7 +562,6 @@ impl std::convert::From<&Sexp> for Symbol {
 
 #[cfg(test)]
 mod tests {
-    use crate::gr::Color;
     use crate::sexp::parser::SexpParser;
     use crate::{
         gr::{Pt, Pts, Stroke, StrokeType, TitleBlock},

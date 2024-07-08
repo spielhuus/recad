@@ -15,7 +15,7 @@ build: $(SOURCES) ## build the rust code.
 	cargo build --lib --quiet
 
 test: ## run all the test cases.
-	RUST_LOG=debug cargo test -- --nocapture
+	RUST_LOG=debug cargo --quiet test -- --nocapture
 
 doc: $(SOURCES) ## create the rust and sphinx documentation.
 	#cargo doc --no-deps --lib --quiet

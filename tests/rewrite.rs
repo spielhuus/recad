@@ -48,6 +48,7 @@ mod tests {
             }
             assert_eq!(diffs, 0);
         }
+
         #[test]
         fn all_elements() {
             init();
@@ -67,10 +68,10 @@ mod tests {
             let mut diffs = 0;
             for change in diff.iter_all_changes() {
                 if change.to_string().contains("(xy ") {
-                    println!("*{}", change.to_string().italic());
+                    //println!("*{}", change.to_string().italic());
                 } else if change.to_string().contains("(uuid ") {
                     //TODO only skip " and not the rest
-                    println!("*{}", change.to_string().italic());
+                    //println!("*{}", change.to_string().italic());
                 } else {
                     match change.tag() {
                         ChangeTag::Delete => { print!("-{}", change.to_string().red()); diffs+=1; },

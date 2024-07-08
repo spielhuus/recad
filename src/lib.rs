@@ -9,7 +9,7 @@ use {
 pub mod draw;
 pub mod gr;
 mod math;
-pub mod netlist;
+mod netlist;
 pub mod pcb;
 pub mod plot;
 pub mod schema;

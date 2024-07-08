@@ -625,7 +625,7 @@ impl Schema {
             builder.push(el::SHEET_INSTANCES);
             builder.push(el::PATH);
             builder.text(&instance.path);
-            builder.push("page"); //TODO
+            builder.push(el::PAGE); //TODO
             builder.text(&instance.reference);
             builder.end();
             builder.end();
