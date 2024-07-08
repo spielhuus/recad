@@ -2,10 +2,16 @@ use lazy_static::lazy_static;
 use ndarray::{arr2, Array2, Axis};
 
 use crate::{
-    gr::{Arc, Circle, Color, GraphicItem, Polyline, Pt, Pts, Rect, Rectangle}, math::{bbox::Bbox, ToNdarray, Transform}, plot::{
+    gr::{Arc, Circle, Color, GraphicItem, Polyline, Pt, Pts, Rect, Rectangle},
+    math::{bbox::Bbox, ToNdarray, Transform},
+    plot::{
         theme::{Style, Theme},
         FontEffects, Paint, Plotter,
-    }, schema::SchemaItem, sexp::constants::el, symbols::Pin, Error, Plot, Schema
+    },
+    schema::SchemaItem,
+    sexp::constants::el,
+    symbols::Pin,
+    Error, Plot, Schema,
 };
 
 lazy_static! {
@@ -55,21 +61,29 @@ impl Plot for Schema {
                     for prop in &symbol.props {
                         if prop.visible() {
                             outline!(self, prop, plotter);
+                            let mut anchor = prop.effects.anchor();
                             plotter.text(
                                 &prop.value,
                                 prop.pos.into(),
                                 FontEffects {
                                     angle: if symbol.pos.angle + prop.pos.angle >= 360.0 {
                                         symbol.pos.angle + prop.pos.angle - 360.0
-                                    } else if symbol.pos.angle + prop.pos.angle >= 180.0 {
-                                        symbol.pos.angle + prop.pos.angle - 180.0
+                                    } else if symbol.pos.angle + prop.pos.angle == 180.0 {
+                                        if anchor == *"end" {
+                                            anchor = String::from("start");
+                                        }
+                                        0.0
+                                    } else if symbol.pos.angle + prop.pos.angle == 90.0 {
+                                        270.0
                                     } else {
                                         symbol.pos.angle + prop.pos.angle
                                     },
-                                    anchor: prop.effects.anchor(),
+                                    anchor,
                                     baseline: prop.effects.baseline(),
                                     face: theme.face(), //TODO prop.effects.font.face.clone().unwrap(),
-                                    size: theme.font_size(prop.effects.font.size, Style::Property).0,
+                                    size: theme
+                                        .font_size(prop.effects.font.size, Style::Property)
+                                        .0,
                                     color: theme.color(prop.effects.font.color, Style::Property),
                                 },
                             );
@@ -98,9 +112,9 @@ impl Plot for Schema {
                                     GraphicItem::Circle(c) => {
                                         circle(plotter, &transform, c, &Style::Outline, theme);
                                     }
-                                    _ => {
-                                        log::warn!("unknown graphic item: {:?}", g);
-                                    }
+                                    GraphicItem::Curve(_) => todo!(),
+                                    GraphicItem::Line(_) => todo!(),
+                                    GraphicItem::Text(_) => todo!(),
                                 }
                             }
                         }
@@ -118,7 +132,7 @@ impl Plot for Schema {
                             theme,
                         );
                     }
-                },
+                }
                 SchemaItem::Wire(wire) => {
                     outline!(self, wire, plotter);
                     let pts1 = wire.pts.0.first().expect("pts[0] should exist");
@@ -130,7 +144,7 @@ impl Plot for Schema {
                         fill: None,
                         width: theme.width(wire.stroke.width, Style::Wire),
                     });
-                },
+                }
                 SchemaItem::NoConnect(nc) => {
                     outline!(self, nc, plotter);
                     let transform = Transform::new().translation(nc.pos.into());
@@ -164,7 +178,7 @@ impl Plot for Schema {
                         fill: None,
                         width: theme.width(0.0, Style::NoConnect),
                     });
-                },
+                }
                 SchemaItem::Junction(junction) => {
                     outline!(self, junction, plotter);
                     plotter.circle(
@@ -180,7 +194,7 @@ impl Plot for Schema {
                             width: theme.width(0.0, Style::Junction),
                         },
                     );
-                },
+                }
                 SchemaItem::LocalLabel(label) => {
                     outline!(self, label, plotter);
                     let text_pos: Array2<f32> = if label.pos.angle == 0.0 {
@@ -209,7 +223,7 @@ impl Plot for Schema {
                             color: theme.color(label.effects.font.color, Style::Property),
                         },
                     );
-                },
+                }
                 SchemaItem::GlobalLabel(label) => {
                     outline!(self, label, plotter);
                     //let angle: f64 = utils::angle(item.item).unwrap();
@@ -262,11 +276,11 @@ impl Plot for Schema {
                     //        ),
                     //    ));
                     //}
-                },
+                }
                 _ => log::error!("plotting item not supported: {:?}", item),
             }
         }
- 
+
         if cfg!(debug_assertions) {
             let outline = self.outline()?;
             plotter.rect(
@@ -425,12 +439,15 @@ fn pin<P: Plotter>(
     let pin_line: Pts = Pts(vec![
         Pt { x: 0.0, y: 0.0 },
         Pt {
-            x: -pin.length,
+            x: if pin.pos.angle == 0.0 || pin.pos.angle == 180.0 {
+                pin.length
+            } else {
+                -pin.length
+            },
             y: 0.0,
         },
     ]);
     let transform_pin = Transform::new()
-        //TODO .mirror(&Some(String::from("x")))
         .translation(Pt {
             x: pin.pos.x,
             y: pin.pos.y,
@@ -472,7 +489,9 @@ fn pin<P: Plotter>(
             }
         };
 
-        let translate = Transform::new().translation(Pt { x: to.x, y: to.y });
+        let translate = Transform::new()
+            .translation(Pt { x: to.x, y: to.y })
+            .mirror(&Some(String::from("x")));
         let line: Pts = translate.transform(&pts.ndarray()).ndarray();
         let pos = line.0[0];
         plotter.text(
@@ -502,7 +521,9 @@ fn pin<P: Plotter>(
                 panic!("pin angle: {}, not supported", pin.pos.angle);
             }
         };
-        let translate = Transform::new().translation(Pt { x: to.x, y: to.y });
+        let translate = Transform::new()
+            .translation(Pt { x: to.x, y: to.y })
+            .mirror(&Some(String::from("x")));
         let line: Pts = translate.transform(&pts.ndarray()).ndarray();
         plotter.text(
             &pin.name.name,
