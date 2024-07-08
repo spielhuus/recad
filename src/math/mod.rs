@@ -82,6 +82,7 @@ impl ToNdarray<Array2<f32>, Rect> for Array2<f32> {
 pub fn pin_position(symbol: &schema::Symbol, pin: &Pin) -> Pt {
     let pos: Array2<f32> = pin.pos.ndarray();
     let transform = Transform::new()
+        .mirror(&symbol.mirror)
         .translation(Pt {
             x: symbol.pos.x,
             y: symbol.pos.y,
@@ -152,14 +153,22 @@ mod tests {
             .iter()
             .map(|p| super::pin_position(symbol, p))
             .collect::<Vec<Pt>>();
-        assert_eq!(
+        let res = [
             Pt {
                 x: 101.60,
-                y: 80.01
+                y: 80.01,
             },
-            *positions.first().unwrap()
-        );
-        assert_eq!(Pt { x: 86.36, y: 77.47 }, *positions.get(1).unwrap());
-        assert_eq!(Pt { x: 86.36, y: 82.55 }, *positions.get(2).unwrap());
+            Pt {
+                x: 86.36,
+                y: 82.55,
+            },
+            Pt {
+                x: 86.36,
+                y: 77.47,
+            },
+        ];
+        assert_eq!(res[0], *positions.first().unwrap());
+        assert_eq!(res[1], *positions.get(1).unwrap());
+        assert_eq!(res[2], *positions.get(2).unwrap());
     }
 }

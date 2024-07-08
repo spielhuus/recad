@@ -572,7 +572,7 @@ mod tests {
         let schema = crate::Schema::load(std::path::Path::new("tests/summe.kicad_sch")).unwrap();
         let netlist = super::Netlist::from(&schema).unwrap();
         assert_eq!(String::from("R33_2__U7_6__C9_2__R36_1"), netlist.netname(crate::gr::Pt { x: 207.01, y: 52.07 }).unwrap());
-        assert_eq!(String::from("R7_1__R8_2__U4_3__RV3_2"), netlist.netname(crate::gr::Pt { x: 81.28, y: 102.87 }).unwrap());
+        assert_eq!(String::from("R7_2__R8_1__U4_3__RV3_2"), netlist.netname(crate::gr::Pt { x: 81.28, y: 102.87 }).unwrap());
         assert_eq!(String::from("+15V"), netlist.netname(crate::gr::Pt { x: 153.67, y: 148.59 }).unwrap());
     }
 }

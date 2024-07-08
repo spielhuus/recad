@@ -77,7 +77,6 @@ impl Plot for Schema {
                     }
 
                     let library = self.library_symbol(&symbol.lib_id).unwrap();
-                    println!("transform {:?} {:?} {:?}", symbol.property(el::PROPERTY_REFERENCE), symbol.pos, symbol.mirror);
                     let transform = Transform::new()
                         .translation(symbol.pos.into())
                         .rotation(symbol.pos.angle)

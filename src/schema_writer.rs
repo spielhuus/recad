@@ -158,7 +158,6 @@ impl SexpWrite for HierarchicalSheet {
         self.stroke.write(builder)?;
         builder.push(el::FILL);
         builder.push(el::COLOR);
-        println!("COLOR: {}", self.fill);
         builder.value(&self.fill.to_string());
         builder.end();
         builder.end();
