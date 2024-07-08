@@ -2,7 +2,12 @@
 use std::path::PathBuf;
 
 use crate::{
-    gr::{Effects, Pos, Pt, Pts, Stroke}, math, schema::{self, SchemaItem}, sexp::constants::el, Drawer, Schema
+    gr::{Effects, Pos, Pt, Pts, Stroke},
+    math,
+    schema::{self, Junction, SchemaItem},
+    sexp::constants::el,
+    symbols::Pin,
+    Drawer, Schema,
 };
 
 ///Attributes for the elements.
@@ -186,29 +191,15 @@ impl Drawer<Label, Schema> for Schema {
     }
 }
 
-#[derive(Default)]
-pub struct Dot {}
-
-impl Dot {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
-impl Drawer<Dot, Schema> for Schema {
-    fn draw(mut self, _dot: Dot) -> Schema {
+impl Drawer<Junction, Schema> for Schema {
+    fn draw(mut self, mut junction: Junction) -> Schema {
         let pt = self.get_pt(&self.last_pos);
-        let dot = schema::Junction {
-            pos: Pos {
-                x: pt.x,
-                y: pt.y,
-                angle: 0.0,
-            },
-            diameter: 0.0,
-            color: None,
-            uuid: crate::uuid!(),
+        junction.pos = Pos {
+            x: pt.x,
+            y: pt.y,
+            angle: 0.0,
         };
-        self.items.push(SchemaItem::Junction(dot));
+        self.items.push(SchemaItem::Junction(junction));
         self
     }
 }
@@ -328,6 +319,13 @@ impl Symbol {
 }
 
 impl Symbol {
+    pub fn tox(mut self, reference: &str, pin: &str) -> Self {
+        self.attrs.push(Attribute::Tox(At::Pin(
+            reference.to_string(),
+            pin.to_string(),
+        )));
+        self
+    }
     //pub fn len(mut self, len: f32) -> Self {
     //    self.len = len;
     //    self
@@ -369,13 +367,43 @@ impl Drawer<Symbol, Schema> for Schema {
         //create the new symbol
         let mut new_symbol = lib.symbol(symbol.unit);
         new_symbol.pos.angle = symbol.angle;
+        new_symbol.mirror = symbol.mirror;
 
         //create the transformer
         let pin_pos = crate::math::pin_position(&new_symbol, lib.pin(&symbol.anchor).unwrap());
 
+        for attr in symbol.attrs.attributes {
+            println!("{:?}", attr);
+            match attr {
+                Attribute::Anchor(_) => todo!(),
+                Attribute::Direction(_) => todo!(),
+                Attribute::Id(_) => todo!(),
+                Attribute::Mirror(_) => todo!(),
+                Attribute::Length(_) => todo!(),
+                Attribute::Rotate(_) => todo!(),
+                Attribute::Tox(at) => {
+                    //match at {
+                    //    At::Pt(_) => todo!(),
+                    //    At::Pin(reference, pin) => {
+                    //        let to_symbol = self.symbol(reference, unit)
+                    //        let target_pos = crate::math::pin_position(&new_symbol, self.pin(&reference, &pin).unwrap());
+                    //        println!("  To({:?})", target_pos);
+                    //    },
+                    //    At::Dot(_) => todo!(),
+                    //}
+                }
+                Attribute::Toy(_) => todo!(),
+                Attribute::Property(_) => todo!(),
+                Attribute::Dot(_) => todo!(),
+            }
+        }
+
         //calculate position
         let pt = self.get_pt(&self.last_pos);
-        let start_pt = Pt { x: pt.x - pin_pos.x, y: pt.y - pin_pos.y };
+        let start_pt = Pt {
+            x: pt.x - pin_pos.x,
+            y: pt.y - pin_pos.y,
+        };
 
         new_symbol.pos.x = start_pt.x;
         new_symbol.pos.y = start_pt.y;

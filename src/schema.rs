@@ -10,7 +10,7 @@ use crate::{
     },
     math::{bbox::Bbox, ToNdarray},
     sexp::{builder::Builder, constants::el},
-    symbols::LibrarySymbol,
+    symbols::{LibrarySymbol, Pin},
     Error, Schema, SexpWrite,
 };
 
@@ -57,7 +57,7 @@ pub struct TextBox {
 ///A junction represents a connection point where multiple wires
 ///or components intersect, allowing electrical current to
 ///flow between them.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Junction {
     /// `Pos` defines the X and Y coordinates of the junction.
     pub pos: Pos,
@@ -67,6 +67,17 @@ pub struct Junction {
     pub color: Option<Color>,
     /// Universally unique identifier for the junction.
     pub uuid: String,
+}
+
+impl Junction {
+    pub fn new() -> Self {
+        Self {
+            pos: Pos::default(),
+            diameter: 0.0,
+            color: None,
+            uuid: crate::uuid!(),
+        }
+    }
 }
 
 ///A `Bus` is a group of interconnected wires or connections that distribute
@@ -125,6 +136,19 @@ pub struct LocalLabel {
     pub uuid: String,
     /// Specifies whether the fields and positions are automatically populated.
     pub fields_autoplaced: bool,
+}
+
+impl LocalLabel {
+    pub fn new(text: String) -> Self {
+        Self {
+            text,
+            pos: Pos::default(),
+            effects: Effects::default(),
+            color: None,
+            uuid: crate::uuid!(),
+            fields_autoplaced: false,
+        }
+    }
 }
 
 ///A `GlobalLabel` is a custom identifier that can be assigned to
@@ -431,6 +455,44 @@ impl Schema {
                 _ => None,
             })
             .collect::<Vec<&Symbol>>()
+            .first()
+            .copied()
+    }
+
+    /// Obtain symbol unit from pin number.
+    ///
+    ///```
+    /// use recad::Schema;
+    /// use std::path::Path;
+    ///
+    /// let path = Path::new("tests/summe.kicad_sch");
+    ///
+    /// let schema = Schema::load(path).unwrap();
+    /// assert_eq!(Some(1), schema.pin_unit("U2", "1"));
+    /// assert_eq!(Some(2), schema.pin_unit("U2", "7"));
+    ///
+    pub fn pin_unit(&self, reference: &str, pin: &str) -> Option<u8> {
+        self.items
+            .iter()
+            .filter_map(|s| match s {
+                SchemaItem::Symbol(s) => {
+                    if reference == s.property(el::PROPERTY_REFERENCE) {
+                        if let Some(lib) = self.library_symbol(&s.lib_id) {
+                            if lib.pin(pin).is_some() {
+                                Some(s.unit)
+                            } else {
+                                None
+                            }
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            })
+            .collect::<Vec<u8>>()
             .first()
             .copied()
     }
