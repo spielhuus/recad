@@ -10,7 +10,7 @@ use crate::{
     },
     math::{bbox::Bbox, ToNdarray},
     sexp::{builder::Builder, constants::el},
-    symbols::{LibrarySymbol, Pin},
+    symbols::LibrarySymbol,
     Error, Schema, SexpWrite,
 };
 
@@ -459,43 +459,43 @@ impl Schema {
             .copied()
     }
 
-    /// Obtain symbol unit from pin number.
-    ///
-    ///```
-    /// use recad::Schema;
-    /// use std::path::Path;
-    ///
-    /// let path = Path::new("tests/summe.kicad_sch");
-    ///
-    /// let schema = Schema::load(path).unwrap();
-    /// assert_eq!(Some(1), schema.pin_unit("U2", "1"));
-    /// assert_eq!(Some(2), schema.pin_unit("U2", "7"));
-    ///
-    pub fn pin_unit(&self, reference: &str, pin: &str) -> Option<u8> {
-        self.items
-            .iter()
-            .filter_map(|s| match s {
-                SchemaItem::Symbol(s) => {
-                    if reference == s.property(el::PROPERTY_REFERENCE) {
-                        if let Some(lib) = self.library_symbol(&s.lib_id) {
-                            if lib.pin(pin).is_some() {
-                                Some(s.unit)
-                            } else {
-                                None
-                            }
-                        } else {
-                            None
-                        }
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            })
-            .collect::<Vec<u8>>()
-            .first()
-            .copied()
-    }
+    ///// Obtain symbol unit from pin number.
+    /////
+    /////```
+    ///// use recad::Schema;
+    ///// use std::path::Path;
+    /////
+    ///// let path = Path::new("tests/summe.kicad_sch");
+    /////
+    ///// let schema = Schema::load(path).unwrap();
+    ///// assert_eq!(Some(1), schema.pin_unit("U2", "1"));
+    ///// assert_eq!(Some(2), schema.pin_unit("U2", "7"));
+    /////
+    //pub fn pin_unit(&self, reference: &str, pin: &str) -> Option<u8> {
+    //    self.items
+    //        .iter()
+    //        .filter_map(|s| match s {
+    //            SchemaItem::Symbol(s) => {
+    //                if reference == s.property(el::PROPERTY_REFERENCE) {
+    //                    if let Some(lib) = self.library_symbol(&s.lib_id) {
+    //                        if lib.pin(pin).is_some() {
+    //                            Some(s.unit)
+    //                        } else {
+    //                            None
+    //                        }
+    //                    } else {
+    //                        None
+    //                    }
+    //                } else {
+    //                    None
+    //                }
+    //            }
+    //            _ => None,
+    //        })
+    //        .collect::<Vec<u8>>()
+    //        .first()
+    //        .copied()
+    //}
 
     /// Get a library symbol by lib_id
     ///
