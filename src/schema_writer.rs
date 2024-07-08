@@ -1,13 +1,12 @@
-use std::io::Write;
-
 use crate::{
     gr::{Color, Property},
     schema::{
-        Bus, BusEntry, GlobalLabel, HierarchicalLabel, HierarchicalPin, HierarchicalSheet, Junction, LocalLabel, NetclassFlag, NoConnect, Symbol, Text, TextBox, Wire
+        Bus, BusEntry, GlobalLabel, HierarchicalLabel, HierarchicalPin, HierarchicalSheet,
+        Junction, LocalLabel, NetclassFlag, NoConnect, Symbol, Text, TextBox, Wire,
     },
     sexp::{builder::Builder, constants::el},
     symbols::{LibrarySymbol, Pin},
-    yes_or_no, Error, Schema, SexpWrite,
+    yes_or_no, Error, SexpWrite,
 };
 
 fn sub_lib_id(input: &str) -> Result<String, Error> {
@@ -173,6 +172,19 @@ impl SexpWrite for HierarchicalSheet {
             pin.write(builder)?;
         }
         //instances
+        for instance in &self.instances {
+            builder.push(el::INSTANCES);
+            builder.push(el::PROJECT);
+            builder.text(&instance.project_name);
+            builder.push(el::PATH);
+            builder.text(&instance.path);
+            builder.push(el::PAGE);
+            builder.text(&instance.page_number);
+            builder.end();
+            builder.end();
+            builder.end();
+            builder.end();
+        }
         builder.end();
         Ok(())
     }
@@ -534,111 +546,3 @@ impl SexpWrite for TextBox {
         Ok(())
     }
 }
-
-impl Schema {
-    pub fn write(&self, writer: &mut dyn Write) -> Result<(), Error> {
-        let mut builder = Builder::new();
-        builder.push("kicad_sch");
-
-        builder.push("version");
-        builder.value(&self.version);
-        builder.end();
-
-        builder.push("generator");
-        builder.text(&self.generator);
-        builder.end();
-
-        if let Some(version) = &self.generator_version {
-            builder.push("generator_version");
-            builder.text(version);
-            builder.end();
-        }
-
-        builder.push(el::UUID);
-        builder.text(&self.uuid);
-        builder.end();
-
-        builder.push(el::PAPER);
-        builder.text(&self.paper.to_string());
-        builder.end();
-
-        builder.push(el::TITLE_BLOCK);
-
-        if let Some(title) = &self.title_block.title {
-            builder.push(el::TITLE_BLOCK_TITLE);
-            builder.text(title);
-            builder.end();
-        }
-        if let Some(date) = &self.title_block.date {
-            builder.push(el::TITLE_BLOCK_DATE);
-            builder.text(date);
-            builder.end();
-        }
-        if let Some(rev) = &self.title_block.revision {
-            builder.push(el::TITLE_BLOCK_REV);
-            builder.text(rev);
-            builder.end();
-        }
-        for c in &self.title_block.comment {
-            builder.push(el::TITLE_BLOCK_COMMENT);
-            builder.value(&c.0.to_string());
-            builder.text(&c.1);
-            builder.end();
-        }
-        builder.end();
-
-        builder.push(el::LIB_SYMBOLS);
-        for symbol in &self.library_symbols {
-            symbol.write(&mut builder)?;
-        }
-        builder.end();
-
-        for item in &self.items {
-            match item {
-                crate::schema::SchemaItem::Arc(item) => item.write(&mut builder)?,
-                crate::schema::SchemaItem::Bus(item) => item.write(&mut builder)?,
-                crate::schema::SchemaItem::BusEntry(item) => item.write(&mut builder)?,
-                crate::schema::SchemaItem::Circle(item) => item.write(&mut builder)?,
-                crate::schema::SchemaItem::Curve(item) => {
-                    todo!();
-                } //item.write(&mut builder)?,
-                crate::schema::SchemaItem::GlobalLabel(item) => item.write(&mut builder)?,
-                crate::schema::SchemaItem::Junction(item) => item.write(&mut builder)?,
-                crate::schema::SchemaItem::Line(item) => {
-                    todo!();
-                } //item.write(&mut builder)?,
-                crate::schema::SchemaItem::LocalLabel(item) => item.write(&mut builder)?,
-                crate::schema::SchemaItem::NoConnect(item) => item.write(&mut builder)?,
-                crate::schema::SchemaItem::Polyline(item) => item.write(&mut builder)?,
-                crate::schema::SchemaItem::Rectangle(item) => item.write(&mut builder)?,
-                crate::schema::SchemaItem::Symbol(item) => item.write(&mut builder)?,
-                crate::schema::SchemaItem::Text(item) => item.write(&mut builder)?,
-                crate::schema::SchemaItem::Wire(item) => item.write(&mut builder)?,
-                crate::schema::SchemaItem::HierarchicalSheet(item) => item.write(&mut builder)?,
-                crate::schema::SchemaItem::TextBox(item) => item.write(&mut builder)?,
-                crate::schema::SchemaItem::HierarchicalLabel(item) => item.write(&mut builder)?,
-                crate::schema::SchemaItem::NetclassFlag(item) => item.write(&mut builder)?,
-            }
-        }
-
-        for instance in &self.sheet_instances {
-            builder.push(el::SHEET_INSTANCES);
-            builder.push(el::PATH);
-            builder.text(&instance.path);
-            builder.push(el::PAGE); //TODO
-            builder.text(&instance.reference);
-            builder.end();
-            builder.end();
-            builder.end();
-        }
-
-        builder.end();
-
-        let sexp = builder.sexp().unwrap();
-        sexp.write(writer)?;
-        writer.write_all("\n".as_bytes())?;
-
-        Ok(())
-    }
-}
-

@@ -1,7 +1,7 @@
 use crate::{
     gr::{self, Arc, Circle, Color, GraphicItem, Line, PaperSize, Polyline, Property, Rectangle},
     schema::{
-        Bus, BusEntry, ConnectionType, GlobalLabel, HierarchicalLabel, HierarchicalPin, HierarchicalSheet, Instance, Junction, LocalLabel, NetclassFlag, NoConnect, SchemaItem, Symbol, Text, TextBox, Wire
+        Bus, BusEntry, ConnectionType, GlobalLabel, HierarchicalLabel, HierarchicalPin, HierarchicalSheet, Instance, Junction, LocalLabel, NetclassFlag, NoConnect, ProjectInstance, SchemaItem, Symbol, Text, TextBox, Wire
     },
     sexp::{constants::el, Sexp, SexpQuery, SexpString, SexpStringList, SexpTree, SexpValue},
     symbols::{ElectricalTypes, LibrarySymbol, Pin, PinGraphicalStyle, PinProperty},
@@ -118,6 +118,9 @@ impl std::convert::From<&Sexp> for Result<HierarchicalPin, Error> {
 impl std::convert::From<&Sexp> for Result<HierarchicalSheet, Error> {
     fn from(sexp: &Sexp) -> Result<HierarchicalSheet, Error> {
         let size = sexp.query(el::SIZE).next().unwrap(); //TODO create error
+        let instance = sexp.query(el::INSTANCES).next().unwrap();
+        let project = instance.query(el::PROJECT).next().unwrap();
+        let path = project.query(el::PATH).next().unwrap();
         Ok(HierarchicalSheet {
             pos: sexp.into(),
             width: size.get(0).unwrap(),
@@ -131,7 +134,11 @@ impl std::convert::From<&Sexp> for Result<HierarchicalSheet, Error> {
             pins: sexp.query(el::PIN).map(|p| { 
                 Into::<Result<HierarchicalPin, Error>>::into(p).unwrap()
             }).collect(),
-            instances: vec![], //TODO todo!(),
+            instances: vec![ProjectInstance { 
+                project_name: project.get(0).unwrap(),
+                path: path.get(0).unwrap(),
+                page_number: path.first(el::PAGE).unwrap(),
+            }],
             uuid: error_if_none!(sexp.first(el::UUID), "uuid is mandatory")?,
         })
     }

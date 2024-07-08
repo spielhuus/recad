@@ -1,6 +1,6 @@
 mod tests {
     mod parser {
-        use std::{fs::File, io::Write, path::Path};
+        use std::{fs::File, path::Path};
 
         use recad::{draw::{At, Label, Symbol, Wire}, gr::Pt, plot::{theme::{Theme, Themes}, SvgPlotter, Plotter}, Drawer, Plot, Schema};
         fn init() {
@@ -25,7 +25,7 @@ mod tests {
             let schema = Schema::load(Path::new("tests/echo/echo.kicad_sch")).unwrap();
             let mut file = std::fs::File::create("/tmp/summe.kicad_sch").unwrap();
             schema.write(&mut file).unwrap();
-            let mut builder = Schema::new()
+            let builder = Schema::new()
                 .move_to(At::Pt(Pt { x: 50.8, y: 50.8 }))
                 .draw(Label::new("Vin").rotate(180.0))
                 .draw(Wire::new().right().len(4.0))
@@ -44,7 +44,7 @@ mod tests {
             builder.write(&mut file).unwrap();
 
             let mut svg = SvgPlotter::new();
-            let res = builder.plot(&mut svg, &Theme::from(Themes::Kicad2020));
+            builder.plot(&mut svg, &Theme::from(Themes::Kicad2020)).unwrap();
             let mut file = File::create("/tmp/test_builder.svg").unwrap();
             svg.write(&mut file).unwrap();
         }

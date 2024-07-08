@@ -1,13 +1,17 @@
-use std::{fmt, path::Path};
+use std::{fmt, io::Write, path::Path};
+
+use ndarray::{Array, ArrayView};
 
 use crate::{
     draw::At,
     gr::{
         Arc, Circle, Color, Curve, Effects, FillType, Line, PaperSize, Polyline, Pos, Property, Pt,
-        Pts, Rectangle, Stroke, TitleBlock,
+        Pts, Rect, Rectangle, Stroke, TitleBlock,
     },
+    math::{bbox::Bbox, ToNdarray},
+    sexp::{builder::Builder, constants::el},
     symbols::LibrarySymbol,
-    Error, Schema,
+    Error, Schema, SexpWrite,
 };
 
 // TODO A schema text has the `exclude_from_sim` field, which is not included in `gr:Text`
@@ -92,7 +96,7 @@ pub struct BusEntry {
     pub uuid: String,
 }
 
-/// Wires represent electrical connections between components or points, 
+/// Wires represent electrical connections between components or points,
 /// showing the circuit's interconnections and paths for electric current flow.
 #[derive(Debug, Clone)]
 pub struct Wire {
@@ -402,10 +406,12 @@ impl Schema {
                     } else {
                         None
                     }
-                },
+                }
                 _ => None,
             })
-            .collect::<Vec<&Symbol>>().first().copied()
+            .collect::<Vec<&Symbol>>()
+            .first()
+            .copied()
     }
 
     //Get a library symbol by lib_id
@@ -416,6 +422,175 @@ impl Schema {
             .collect::<Vec<&LibrarySymbol>>()
             .first()
             .copied()
+    }
+
+    /// Returns the outline of this [`Schema`].
+    pub fn outline(&self) -> Result<Rect, Error> {
+        let mut pts = Array::zeros((0, 2));
+        for item in &self.items {
+            match item {
+                crate::schema::SchemaItem::Junction(junction) => {
+                    let bound = junction.outline(self)?.ndarray();
+                    pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
+                        .expect("insertion failed");
+                    pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
+                        .expect("insertion failed");
+                }
+                crate::schema::SchemaItem::NoConnect(nc) => {
+                    let bound = nc.outline(self)?.ndarray();
+                    pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
+                        .expect("insertion failed");
+                    pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
+                        .expect("insertion failed");
+                }
+                crate::schema::SchemaItem::Wire(wire) => {
+                    let bound = wire.outline(self)?.ndarray();
+                    pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
+                        .expect("insertion failed");
+                    pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
+                        .expect("insertion failed");
+                }
+                crate::schema::SchemaItem::LocalLabel(label) => {
+                    let bound = label.outline(self)?.ndarray();
+                    pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
+                        .expect("insertion failed");
+                    pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
+                        .expect("insertion failed");
+                }
+                crate::schema::SchemaItem::GlobalLabel(label) => {
+                    let bound = label.outline(self)?.ndarray();
+                    pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
+                        .expect("insertion failed");
+                    pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
+                        .expect("insertion failed");
+                }
+                crate::schema::SchemaItem::Symbol(symbol) => {
+                    let bound = symbol.outline(self)?.ndarray();
+                    pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
+                        .expect("insertion failed");
+                    pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
+                        .expect("insertion failed");
+
+                    for prop in &symbol.props {
+                        if prop.visible() {
+                            let bound = prop.outline(self)?.ndarray();
+                            pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
+                                .expect("insertion failed");
+                            pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
+                                .expect("insertion failed");
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+        Ok(crate::math::bbox::calculate(pts))
+    }
+
+    /// write the schema to a `Write`.
+    pub fn write(&self, writer: &mut dyn Write) -> Result<(), Error> {
+        let mut builder = Builder::new();
+        builder.push("kicad_sch");
+
+        builder.push("version");
+        builder.value(&self.version);
+        builder.end();
+
+        builder.push("generator");
+        builder.text(&self.generator);
+        builder.end();
+
+        if let Some(version) = &self.generator_version {
+            builder.push("generator_version");
+            builder.text(version);
+            builder.end();
+        }
+
+        builder.push(el::UUID);
+        builder.text(&self.uuid);
+        builder.end();
+
+        builder.push(el::PAPER);
+        builder.text(&self.paper.to_string());
+        builder.end();
+
+        builder.push(el::TITLE_BLOCK);
+
+        if let Some(title) = &self.title_block.title {
+            builder.push(el::TITLE_BLOCK_TITLE);
+            builder.text(title);
+            builder.end();
+        }
+        if let Some(date) = &self.title_block.date {
+            builder.push(el::TITLE_BLOCK_DATE);
+            builder.text(date);
+            builder.end();
+        }
+        if let Some(rev) = &self.title_block.revision {
+            builder.push(el::TITLE_BLOCK_REV);
+            builder.text(rev);
+            builder.end();
+        }
+        for c in &self.title_block.comment {
+            builder.push(el::TITLE_BLOCK_COMMENT);
+            builder.value(&c.0.to_string());
+            builder.text(&c.1);
+            builder.end();
+        }
+        builder.end();
+
+        builder.push(el::LIB_SYMBOLS);
+        for symbol in &self.library_symbols {
+            symbol.write(&mut builder)?;
+        }
+        builder.end();
+
+        for item in &self.items {
+            match item {
+                crate::schema::SchemaItem::Arc(item) => item.write(&mut builder)?,
+                crate::schema::SchemaItem::Bus(item) => item.write(&mut builder)?,
+                crate::schema::SchemaItem::BusEntry(item) => item.write(&mut builder)?,
+                crate::schema::SchemaItem::Circle(item) => item.write(&mut builder)?,
+                crate::schema::SchemaItem::Curve(item) => {
+                    todo!();
+                } //item.write(&mut builder)?,
+                crate::schema::SchemaItem::GlobalLabel(item) => item.write(&mut builder)?,
+                crate::schema::SchemaItem::Junction(item) => item.write(&mut builder)?,
+                crate::schema::SchemaItem::Line(item) => {
+                    todo!();
+                } //item.write(&mut builder)?,
+                crate::schema::SchemaItem::LocalLabel(item) => item.write(&mut builder)?,
+                crate::schema::SchemaItem::NoConnect(item) => item.write(&mut builder)?,
+                crate::schema::SchemaItem::Polyline(item) => item.write(&mut builder)?,
+                crate::schema::SchemaItem::Rectangle(item) => item.write(&mut builder)?,
+                crate::schema::SchemaItem::Symbol(item) => item.write(&mut builder)?,
+                crate::schema::SchemaItem::Text(item) => item.write(&mut builder)?,
+                crate::schema::SchemaItem::Wire(item) => item.write(&mut builder)?,
+                crate::schema::SchemaItem::HierarchicalSheet(item) => item.write(&mut builder)?,
+                crate::schema::SchemaItem::TextBox(item) => item.write(&mut builder)?,
+                crate::schema::SchemaItem::HierarchicalLabel(item) => item.write(&mut builder)?,
+                crate::schema::SchemaItem::NetclassFlag(item) => item.write(&mut builder)?,
+            }
+        }
+
+        for instance in &self.sheet_instances {
+            builder.push(el::SHEET_INSTANCES);
+            builder.push(el::PATH);
+            builder.text(&instance.path);
+            builder.push(el::PAGE);
+            builder.text(&instance.reference);
+            builder.end();
+            builder.end();
+            builder.end();
+        }
+
+        builder.end();
+
+        let sexp = builder.sexp().unwrap();
+        sexp.write(writer)?;
+        writer.write_all("\n".as_bytes())?;
+
+        Ok(())
     }
 }
 

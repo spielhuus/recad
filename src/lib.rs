@@ -6,6 +6,7 @@ use {
     sexp::{parser::SexpParser, SexpTree},
 };
 
+mod circuit;
 pub mod draw;
 pub mod gr;
 mod math;
@@ -50,6 +51,17 @@ impl From<std::io::Error> for Error {
     fn from(e: std::io::Error) -> Self {
         Self("io".to_string(), e.to_string())
     }
+}
+
+///The Circuit struct represents a spice netlist.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Circuit {
+    name: String,
+    pathlist: Vec<String>,
+    items: Vec<CircuitItem>,
+    subcircuits: IndexMap<String, (Vec<String>, Circuit)>,
+    pub controls: Vec<String>,
+    pub options: IndexMap<String, String>,
 }
 
 #[derive(Debug, Default)]
@@ -144,6 +156,8 @@ pub struct SymbolLibrary {
     pathlist: Vec<PathBuf>,
 }
 
+use circuit::CircuitItem;
+use indexmap::IndexMap;
 use plot::{theme::Theme, Plotter};
 use schema::{Instance, SchemaItem};
 use sexp::{builder::Builder, constants::el, SexpValue};

@@ -80,7 +80,7 @@ mod tests {
                     };
                 }
             }
-            assert_eq!(diffs, 23);
+            assert_eq!(diffs, 16);
         }
     }
 }

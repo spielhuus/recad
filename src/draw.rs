@@ -186,6 +186,7 @@ impl Drawer<Label, Schema> for Schema {
     }
 }
 
+#[derive(Default)]
 pub struct Dot {}
 
 impl Dot {
@@ -195,7 +196,7 @@ impl Dot {
 }
 
 impl Drawer<Dot, Schema> for Schema {
-    fn draw(mut self, dot: Dot) -> Schema {
+    fn draw(mut self, _dot: Dot) -> Schema {
         let pt = self.get_pt(&self.last_pos);
         let dot = schema::Junction {
             pos: Pos {
@@ -212,6 +213,7 @@ impl Drawer<Dot, Schema> for Schema {
     }
 }
 
+#[derive(Default)]
 pub struct Wire {
     len: f32,
     attrs: To,

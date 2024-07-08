@@ -13,11 +13,7 @@
 use indexmap::IndexMap;
 
 use crate::{
-    gr::Pt,
-    schema::{GlobalLabel, LocalLabel, SchemaItem, Symbol},
-    sexp::constants::el,
-    symbols::Pin,
-    Error, Schema,
+    gr::Pt, schema::{GlobalLabel, LocalLabel, SchemaItem, Symbol}, sexp::constants::el, symbols::Pin, Circuit, Error, Schema
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -228,6 +224,141 @@ impl<'a> Netlist<'a> {
 
     pub fn netname(&self, pt: Pt) -> Option<String> {
         self.names.get(&pt).cloned()
+    }
+
+    pub fn circuit(&self, circuit: &mut Circuit) -> Result<(), Error> {
+        ////Create a spice entry for each referenca
+        //for (reference, symbols) in &self.symbols {
+        //    let lib_id: String = symbols.first().unwrap().value(el::LIB_ID).unwrap();
+        //    //but not for the power symbols
+        //    if lib_id.starts_with("power:") {
+        //        continue;
+        //    }
+        //
+        //    let first_symbol = &symbols.first().unwrap();
+        //
+        //    //skip symbol when Netlist_Enabled is 'N'
+        //    let netlist_enabled: Option<String> = first_symbol.property("Spice_Netlist_Enabled"); //TODO differenet
+        //                                                                                          //name in new
+        //                                                                                          //KiCAD verison
+        //    if let Some(enabled) = netlist_enabled {
+        //        if enabled == "N" {
+        //            continue;
+        //        }
+        //    }
+        //
+        //    //create the pin order
+        //    let lib_symbols = self
+        //        .schema
+        //        .root()
+        //        .unwrap()
+        //        .query(el::LIB_SYMBOLS)
+        //        .next()
+        //        .unwrap();
+        //    let lib = lib_symbols
+        //        .query(el::SYMBOL)
+        //        .find(|s| {
+        //            let name: String = s.get(0).unwrap();
+        //            name == lib_id
+        //        })
+        //        .unwrap();
+        //    let my_pins = pin_names(lib).unwrap();
+        //    let mut pin_sequence: Vec<String> = my_pins.keys().map(|s| s.to_string()).collect();
+        //    pin_sequence.sort_by_key(|x| x.parse::<i32>().unwrap()); //TODO could be string
+        //
+        //    //when Node_Sequence is defined, use it
+        //    let netlist_sequence: Option<String> = first_symbol.property("Spice_Node_Sequence"); //TODO
+        //    if let Some(sequence) = netlist_sequence {
+        //        pin_sequence.clear();
+        //        let splits: Vec<&str> = sequence.split(' ').collect();
+        //        for s in splits {
+        //            pin_sequence.push(s.to_string());
+        //        }
+        //    }
+        //
+        //    let mut nodes = Vec::new();
+        //    for n in pin_sequence {
+        //        let pin = my_pins.get(&n).unwrap();
+        //        for symbol in symbols {
+        //            let unit: usize = symbol.value(el::SYMBOL_UNIT).unwrap();
+        //            if unit == pin.1 {
+        //                let at = pin.0.query(el::AT).next().unwrap();
+        //                let x: f64 = at.get(0).unwrap();
+        //                let y: f64 = at.get(1).unwrap();
+        //                let pts = Shape::transform(*symbol, &arr1(&[x, y]));
+        //                let p0 = Point::new(pts[0], pts[1]);
+        //                if let Some(nn) = self.node_name(&p0) {
+        //                    nodes.push(nn);
+        //                } else {
+        //                    nodes.push(String::from("NF"));
+        //                }
+        //            }
+        //        }
+        //    }
+        //
+        //    //write the spice netlist item
+        //    let spice_primitive: Option<String> = first_symbol.property("Spice_Primitive"); //TODO
+        //    let spice_model = first_symbol.property("Spice_Model");
+        //    let spice_value = first_symbol.property("Value");
+        //    if let Some(primitive) = spice_primitive {
+        //        if primitive == "X" {
+        //            circuit.circuit(reference.to_string(), nodes, spice_model.unwrap())?;
+        //        } else if primitive == "Q" {
+        //            circuit.bjt(
+        //                reference.to_string(),
+        //                nodes[0].clone(),
+        //                nodes[1].clone(),
+        //                nodes[2].clone(),
+        //                spice_model.unwrap(),
+        //            );
+        //        } else if primitive == "J" {
+        //            circuit.jfet(
+        //                reference.to_string(),
+        //                nodes[0].clone(),
+        //                nodes[1].clone(),
+        //                nodes[2].clone(),
+        //                spice_model.unwrap(),
+        //            );
+        //        } else if primitive == "D" {
+        //            circuit.diode(
+        //                reference.to_string(),
+        //                nodes[0].clone(),
+        //                nodes[1].clone(),
+        //                spice_model.unwrap(),
+        //            );
+        //        } else {
+        //            println!(
+        //                "Other node with 'X' -> {}{} - - {}",
+        //                primitive,
+        //                reference,
+        //                spice_value.unwrap()
+        //            );
+        //        }
+        //    } else if reference.starts_with('R') {
+        //        circuit.resistor(
+        //            reference.clone(),
+        //            nodes[0].clone(),
+        //            nodes[1].clone(),
+        //            spice_value.unwrap(),
+        //        );
+        //    } else if reference.starts_with('C') {
+        //        circuit.capacitor(
+        //            reference.clone(),
+        //            nodes[0].clone(),
+        //            nodes[1].clone(),
+        //            spice_value.unwrap(),
+        //        );
+        //    // } else if std::env::var("ELEKTRON_DEBUG").is_ok() {
+        //    } else {
+        //        println!(
+        //            "Unkknwon Reference: {} ({:?}) {}",
+        //            reference,
+        //            nodes,
+        //            spice_value.unwrap()
+        //        );
+        //    }
+        //}
+        Ok(())
     }
 }
 

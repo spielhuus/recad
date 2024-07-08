@@ -10,7 +10,7 @@ use crate::{
 use super::{pin_position, ToNdarray, Transform};
 
 ///calculates the outline of a list of points.
-fn calculate(pts: Array2<f32>) -> Rect {
+pub fn calculate(pts: Array2<f32>) -> Rect {
     let axis1 = pts.slice(ndarray::s![.., 0]);
     let axis2 = pts.slice(ndarray::s![.., 1]);
     Rect {
@@ -263,71 +263,6 @@ impl Bbox for Symbol {
         }
 
         //calculate the bounds
-        Ok(calculate(pts))
-    }
-}
-
-impl Schema {
-    /// Returns the outline of this [`Schema`].
-    pub fn outline(&self) -> Result<Rect, Error> {
-        let mut pts = Array::zeros((0, 2));
-        for item in &self.items {
-            match item {
-                crate::schema::SchemaItem::Junction(junction) => {
-                    let bound = junction.outline(self)?.ndarray();
-                    pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
-                        .expect("insertion failed");
-                    pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
-                        .expect("insertion failed");
-                }
-                crate::schema::SchemaItem::NoConnect(nc) => {
-                    let bound = nc.outline(self)?.ndarray();
-                    pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
-                        .expect("insertion failed");
-                    pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
-                        .expect("insertion failed");
-                }
-                crate::schema::SchemaItem::Wire(wire) => {
-                    let bound = wire.outline(self)?.ndarray();
-                    pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
-                        .expect("insertion failed");
-                    pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
-                        .expect("insertion failed");
-                }
-                crate::schema::SchemaItem::LocalLabel(label) => {
-                    let bound = label.outline(self)?.ndarray();
-                    pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
-                        .expect("insertion failed");
-                    pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
-                        .expect("insertion failed");
-                }
-                crate::schema::SchemaItem::GlobalLabel(label) => {
-                    let bound = label.outline(self)?.ndarray();
-                    pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
-                        .expect("insertion failed");
-                    pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
-                        .expect("insertion failed");
-                }
-                crate::schema::SchemaItem::Symbol(symbol) => {
-                    let bound = symbol.outline(self)?.ndarray();
-                    pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
-                        .expect("insertion failed");
-                    pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
-                        .expect("insertion failed");
-
-                    for prop in &symbol.props {
-                        if prop.visible() {
-                            let bound = prop.outline(self)?.ndarray();
-                            pts.push_row(ArrayView::from(&[bound[[0, 0]], bound[[0, 1]]]))
-                                .expect("insertion failed");
-                            pts.push_row(ArrayView::from(&[bound[[1, 0]], bound[[1, 1]]]))
-                                .expect("insertion failed");
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
         Ok(calculate(pts))
     }
 }
