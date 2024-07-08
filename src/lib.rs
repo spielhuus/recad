@@ -66,39 +66,25 @@ pub struct Circuit {
 
 #[derive(Debug, Default)]
 ///Define the `Schematic` file format.
-///
-///Open a schematic file from a path.
-///
-///```
-///use recad::Schema;
-///use std::path::Path;
-///
-///let path = Path::new("tests/summe.kicad_sch");
-///
-///let schema = Schema::load(path);
-///assert!(schema.is_ok());
-///
 pub struct Schema {
-    ///The `version` token attribute defines the schematic version
-    ///using the YYYYMMDD date format.<br><br>
+    /// The `version` defines the schematic version
+    /// using the YYYYMMDD date format.
     pub version: String,
-    ///The `uuid` defines the universally unique identifier for
-    ///the schematic file.<br><br>
+    /// The `uuid` defines the universally unique identifier for
+    /// the schematic file.
     pub uuid: String,
-    ///The `generator` token attribute defines the program used
-    ///to write the file.<br><br>
+    /// `generator` defines the program used
+    /// to write the file.
     pub generator: String,
-    ///The `generator_version` token attribute defines the
-    ///program version used to write the file.<br><br>
+    /// `generator_version` specifies the program version for file writing
     pub generator_version: Option<String>,
     pub paper: gr::PaperSize,
     pub title_block: gr::TitleBlock,
     pub library_symbols: Vec<LibrarySymbol>,
-
     pub items: Vec<SchemaItem>,
     pub sheet_instances: Vec<Instance>,
     
-    ///attributes for the builder.
+    //attributes for the builder.
     grid: f32,
     last_pos: draw::At,
 }
@@ -194,6 +180,38 @@ pub trait Drawer<T, F> {
     fn draw(self, item: T) -> F;
 }
 
+/// plot a [`Schema`] or [`Pcb`].
+///
+/// Available plotters:
+///
+/// - [`plot::SvgPlotter`] - plot to a [SVG](https://www.w3.org/TR/SVG11/) file.
+///
+/// Example usage:
+/// 
+/// ```
+/// use std::{
+///     io::Write,
+///     path::Path,
+/// };
+///
+/// use recad::{
+///     Schema, Plot,
+///     plot::{
+///         Plotter,
+///         theme::*
+///     },
+/// };
+///
+/// let path = Path::new("tests/summe.kicad_sch");
+/// let schema = Schema::load(path).unwrap();
+///
+/// let mut svg = recad::plot::SvgPlotter::new();
+/// schema.plot(&mut svg, &Theme::from(Themes::Kicad2020)).unwrap();
+///
+/// let mut file = std::fs::File::create("/tmp/summe.svg").unwrap();
+/// let res = svg.write(&mut file);
+/// assert!(res.is_ok());
+/// ```
 pub trait Plot {
     fn plot(self, plotter: &mut impl Plotter, theme: &Theme) -> Result<(), Error>;
 }

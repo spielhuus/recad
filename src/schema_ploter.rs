@@ -2,7 +2,7 @@ use lazy_static::lazy_static;
 use ndarray::{arr2, Array2, Axis};
 
 use crate::{
-    gr::{Circle, Color, GraphicItem, Polyline, Pt, Pts, Rect, Rectangle}, math::{bbox::Bbox, ToNdarray, Transform}, plot::{
+    gr::{Arc, Circle, Color, GraphicItem, Polyline, Pt, Pts, Rect, Rectangle}, math::{bbox::Bbox, ToNdarray, Transform}, plot::{
         theme::{Style, Theme},
         FontEffects, Paint, Plotter,
     }, schema::SchemaItem, sexp::constants::el, symbols::Pin, Error, Plot, Schema
@@ -86,6 +86,9 @@ impl Plot for Schema {
                         if lib_symbol.unit() == 0 || lib_symbol.unit() == symbol.unit {
                             for g in &lib_symbol.graphics {
                                 match g {
+                                    GraphicItem::Arc(a) => {
+                                        arc(plotter, &transform, a, &Style::Outline, theme);
+                                    }
                                     GraphicItem::Polyline(p) => {
                                         polyline(plotter, &transform, p, &Style::Outline, theme);
                                     }
@@ -304,6 +307,48 @@ fn polyline(
     });
 }
 
+fn arc(
+    //<P: Plotter>(
+    plotter: &mut impl Plotter,
+    transform: &Transform,
+    poly: &Arc,
+    style: &Style,
+    theme: &Theme,
+) {
+
+    //let center = arr2(&[[circle.center.x, circle.center.y]]);
+    //let t = transform.transform(&center);
+    //plotter.arc(
+    //    Pt {
+    //        x: t[[0, 0]],
+    //        y: t[[0, 1]],
+    //    },
+    //    circle.radius,
+    //    Paint {
+    //        color: theme.color(None, style.clone()),
+    //        fill: None,
+    //        width: theme.width(0.0, style.clone()),
+    //    },
+    //);
+    //
+    //let arc_start: Array1<f64> = item.item.value(el::GRAPH_START).unwrap();
+    //let arc_mid: Array1<f64> = item.item.value("mid").unwrap();
+    //let arc_end: Array1<f64> = item.item.value(el::GRAPH_END).unwrap();
+    //let classes = vec![Style::Outline, Style::Fill(item.item.into())];
+    //plot_items.push(PlotItem::Arc(
+    //    100,
+    //    Arc::new(
+    //        arc_start,
+    //        arc_mid,
+    //        arc_end,
+    //        0.0,
+    //        None,
+    //        self.theme.get_stroke(item.item.into(), classes.as_slice()),
+    //        None,
+    //    ),
+    //));
+}
+
 fn rectangle<P: Plotter>(
     plotter: &mut P,
     transform: &Transform,
@@ -385,7 +430,7 @@ fn pin<P: Plotter>(
         },
     ]);
     let transform_pin = Transform::new()
-        .mirror(&Some(String::from("x")))
+        //TODO .mirror(&Some(String::from("x")))
         .translation(Pt {
             x: pin.pos.x,
             y: pin.pos.y,

@@ -385,6 +385,16 @@ impl Schema {
     }
 
     ///Load a schema from a path
+    ///
+    ///```
+    ///use recad::Schema;
+    ///use std::path::Path;
+    ///
+    ///let path = Path::new("tests/summe.kicad_sch");
+    ///
+    ///let schema = Schema::load(path);
+    ///assert!(schema.is_ok());
+    ///
     pub fn load(path: &Path) -> Result<Self, Error> {
         let parser = crate::sexp::parser::SexpParser::load(path).unwrap();
         let tree = crate::sexp::SexpTree::from(parser.iter()).unwrap();
@@ -396,6 +406,17 @@ impl Schema {
     }
 
     ///Get a Symbol by reference and unit number.
+    ///
+    ///```
+    /// use recad::Schema;
+    /// use std::path::Path;
+    ///
+    /// let path = Path::new("tests/summe.kicad_sch");
+    ///
+    /// let schema = Schema::load(path).unwrap();
+    /// let symbol = schema.symbol("U1", 1);
+    /// assert!(symbol.is_some());
+    ///
     pub fn symbol(&self, reference: &str, unit: u8) -> Option<&Symbol> {
         self.items
             .iter()
@@ -414,7 +435,18 @@ impl Schema {
             .copied()
     }
 
-    //Get a library symbol by lib_id
+    /// Get a library symbol by lib_id
+    ///
+    ///```
+    /// use recad::Schema;
+    /// use std::path::Path;
+    ///
+    /// let path = Path::new("tests/summe.kicad_sch");
+    ///
+    /// let schema = Schema::load(path).unwrap();
+    /// let symbol = schema.library_symbol("Device:R");
+    /// assert!(symbol.is_some());
+    ///
     pub fn library_symbol(&self, lib_id: &str) -> Option<&LibrarySymbol> {
         self.library_symbols
             .iter()

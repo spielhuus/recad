@@ -110,6 +110,18 @@ impl Plotter for SvgPlotter {
             );
     }
 
+    fn arc(&mut self, center: Pt, radius: f32, stroke: Paint) {
+        //TODO self.paths.append(
+        //    Arc::new()
+        //        .set("cx", center.x)
+        //        .set("cy", center.y)
+        //        .set("r", radius)
+        //        .set("fill", stroke.fill.unwrap_or(Color::None).to_string())
+        //        .set("stroke", stroke.color.to_string())
+        //        .set("stroke-width", stroke.width),
+        //);
+    }
+
     fn circle(&mut self, center: Pt, radius: f32, stroke: Paint) {
         self.paths.append(
             Circle::new()

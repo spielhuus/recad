@@ -108,6 +108,7 @@ pub trait Plotter {
 
     ///Draw a rectancle with stroke.
     fn rect(&mut self, r: Rect, stroke: Paint);
+    fn arc(&mut self, center: Pt, radius: f32, stroke: Paint);
     fn circle(&mut self, center: Pt, radius: f32, stroke: Paint);
     fn text(&mut self, text: &str, pt: Pt, effects: FontEffects);
 
