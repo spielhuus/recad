@@ -380,11 +380,12 @@ fn pin<P: Plotter>(
     let pin_line: Pts = Pts(vec![
         Pt { x: 0.0, y: 0.0 },
         Pt {
-            x: pin.length,
+            x: -pin.length,
             y: 0.0,
         },
     ]);
     let transform_pin = Transform::new()
+        .mirror(&Some(String::from("x")))
         .translation(Pt {
             x: pin.pos.x,
             y: pin.pos.y,

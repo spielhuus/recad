@@ -1,4 +1,4 @@
-use ndarray::{arr2, Array, Array2, ArrayView};
+use ndarray::{arr2, Array, Array2};
 
 use crate::{
     gr::{Effects, Justify, Pos, Property, Pt, Rect},

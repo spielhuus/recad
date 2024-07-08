@@ -79,16 +79,16 @@ pub struct Circuit {
 ///assert!(schema.is_ok());
 ///
 pub struct Schema {
-    ///The ```version``` token attribute defines the schematic version
+    ///The `version` token attribute defines the schematic version
     ///using the YYYYMMDD date format.<br><br>
     pub version: String,
-    ///The ```uuid``` defines the universally unique identifier for
+    ///The `uuid` defines the universally unique identifier for
     ///the schematic file.<br><br>
     pub uuid: String,
-    ///The ```generator``` token attribute defines the program used
+    ///The `generator` token attribute defines the program used
     ///to write the file.<br><br>
     pub generator: String,
-    ///The ```generator_version``` token attribute defines the
+    ///The `generator_version` token attribute defines the
     ///program version used to write the file.<br><br>
     pub generator_version: Option<String>,
     pub paper: gr::PaperSize,
