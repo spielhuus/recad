@@ -1,22 +1,17 @@
 [package]
-name = "recad"
+name = "recad_python"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "recad"
+crate-type = ["cdylib"]
+
 [dependencies]
-ndarray = "*"
-svg  = "0.17"
-itertools = "0.13"
-lazy_static = "1.4"
-uuid = { version = "1.8", features = ["v4", "fast-rng", "macro-diagnostics"] }
-indexmap = "2.2.6"
-regex = "1"
-fontdue = "0.8"
-rust-fontconfig = "0.1.6"
+recad = { path = "../recad" }
 
-log = "0.4"
-env_logger = "0.11"
-colored = "2"
 
-[dev-dependencies]
-similar = "2.5"
+[dependencies.pyo3]
+version = "0.21.1"
+# "abi3-py38" tells pyo3 (and maturin) to build using the stable ABI with minimum Python version 3.8
+features = ["abi3-py38"]
