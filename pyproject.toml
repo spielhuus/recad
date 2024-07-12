@@ -1,3 +1,25 @@
+[project]
+name = "elektron_rs"
+version = "0.1.0"
+authors = [
+    {name = "spielhuus", email = "spielhuus@gmail.com"},
+]
+description = "programmatically create electronic projects"
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["electronics", "circuit"]
+license = {text = "BSD-3-Clause"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "matplotlib",
+    "matplotlib-backend-kitty",
+]
+
+[project.scripts]
+recad = "recad.recad:main"
+
 [build-system]
 requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"

@@ -1,5 +1,5 @@
 [package]
-name = "recad_python"
+name = "recad"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,8 +8,10 @@ name = "recad"
 crate-type = ["cdylib"]
 
 [dependencies]
-recad = { path = "../recad" }
-
+#recad = { path = "../recad_core" }
+recad_core = { git = "https://github.com/spielhuus/recad_core.git" }
+log = "0.4"
+env_logger = "0.11"
 
 [dependencies.pyo3]
 version = "0.21.1"
