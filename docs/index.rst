@@ -13,6 +13,7 @@ With ``recad``, users can seamlessly craft electronic schematics using Python co
    cli
    schema
    changelog
+   api
 
 
 Features
