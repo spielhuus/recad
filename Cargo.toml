@@ -8,8 +8,8 @@ name = "recad"
 crate-type = ["cdylib"]
 
 [dependencies]
-# recad_core = { git = "https://github.com/spielhuus/recad_core.git" }
-recad_core = { path = "../recad_core" }
+recad_core = { git = "https://github.com/spielhuus/recad_core.git" }
+#recad_core = { path = "../recad_core" }
 log = "0.4"
 env_logger = "0.11"
 
