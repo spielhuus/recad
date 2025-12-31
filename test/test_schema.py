@@ -8,5 +8,5 @@ class TestSchemaLoad(unittest.TestCase):
     
     def test_plot_svg(self):
         schema = recad.Schema.load("samples/nuco-v/nuco-v.kicad_sch")
-        self.assertTrue(schema.plot(path = "/tmp/nuco-v.svg") == None)
+        self.assertTrue(schema.plot(path = "target/nuco-v.svg") == None)
 

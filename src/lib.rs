@@ -5,9 +5,13 @@ mod schema;
 /// recad main function.
 #[pyfunction]
 pub fn main() -> PyResult<()> {
+    println!("Hello World");
     env_logger::init();
+
     Ok(())
 }
+
+use pyo3::types::PyModule;
 
 #[pymodule]
 fn recad(m: &Bound<'_, PyModule>) -> PyResult<()> {

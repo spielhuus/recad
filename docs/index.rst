@@ -8,6 +8,7 @@ With ``recad``, users can seamlessly craft electronic schematics using Python co
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+   :hidden:
 
    install
    cli
@@ -40,11 +41,11 @@ Getting started
 
 
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-
+.. Indices and tables
+.. ==================
+..
+.. * :ref:`genindex`
+.. * :ref:`modindex`
+.. * :ref:`search`
+..
+..

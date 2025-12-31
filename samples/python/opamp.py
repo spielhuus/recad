@@ -1,5 +1,8 @@
  #!/usr/bin/env python
 
+import io
+from IPython.display import SVG, display
+from PIL import Image
 import recad
 
 schema = recad.Schema("")
@@ -18,5 +21,7 @@ schema = (schema
     + recad.LocalLabel("Vout").at("U1", "1")
 )
 
-schema.plot(path = "/tmp/recad/py_opamp.svg")
-schema.write("/tmp/recad/py_opamp.kicad_sch")
+svg = schema.plot(scale=10)
+path = "/tmp/recad/py_opamp.svg"
+schema.plot(scale=10, path = path)
+print(f"Image writter to {path}")

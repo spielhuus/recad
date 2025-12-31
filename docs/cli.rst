@@ -1,14 +1,14 @@
-.. currentmodule:: elektron
+.. currentmodule:: recad
 
 Command Line Interface
 ======================
 
-Installing **elektron** installs the ``elektron`` script, a command line
+Installing **recad** installs the ``recad`` script, a command line
 interface, in your virtualenv. Executed from the terminal, this script gives
 access to built-in, extension, and application-defined commands. The ``--help``
 option will give more information about any commands and options.
 
-**elektron** can output graphics to the console. You will need a terminal 
+**recad** can output graphics to the console. You will need a terminal 
 that has the graphics capabilities like `Kitty`_ or `wezterm`_
 
 .. _Kitty: https://click.palletsprojects.com/

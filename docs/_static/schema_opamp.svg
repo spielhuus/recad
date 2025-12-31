@@ -1,86 +1,65 @@
-<svg viewBox="0 0 297 210" xmlns="http://www.w3.org/2000/svg">
+<svg height="254.8933mm" viewBox="47.8 35.027332 80.200005 60.516666" width="324.0001mm" xmlns="http://www.w3.org/2000/svg">
 <svg xmlns="http://www.w3.org/2000/svg">
-<rect fill="none" height="1.69" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="3.00" x="47.80" y="49.11"/>
-<text dominant-baseline="auto" fill="rgba(5, 105, 12, 1)" font-family="osifont" font-size="1.27pt" text-anchor="end" transform="translate(49.8,50.8)">
+<text dominant-baseline="auto" fill="rgba(5, 105, 12, 255)" font-family="osifont" font-size="1.27pt" text-anchor="end" transform="translate(49.8,50.8) rotate(180)">
 Vin
 </text>
-<rect fill="none" height="0.00" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="2.54" x="50.80" y="50.80"/>
-<path d="M50.8,50.8 L53.34,50.8" fill="none" stroke="rgba(0, 255, 0, 1)" stroke-width="0.35"/>
-<rect fill="none" height="2.03" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="7.62" x="53.34" y="49.78"/>
-<rect fill="none" height="1.69" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="2.00" x="56.15" y="45.19"/>
-<text dominant-baseline="middle" fill="rgba(5, 105, 12, 1)" font-family="osifont" font-size="1.27pt" text-anchor="middle" transform="translate(57.15,46.034)">
+<path d="M50.8,50.8 L53.34,50.8" fill="none" stroke="rgba(0, 150, 0, 255)" stroke-width="0.35"/>
+<text dominant-baseline="middle" fill="rgba(5, 105, 12, 255)" font-family="osifont" font-size="1.27pt" text-anchor="middle" transform="translate(57.15,46.034) rotate(90)">
 R1
 </text>
-<rect fill="none" height="1.69" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="4.00" x="55.15" y="47.69"/>
-<text dominant-baseline="middle" fill="rgba(5, 105, 12, 1)" font-family="osifont" font-size="1.27pt" text-anchor="middle" transform="translate(57.15,48.534)">
+<text dominant-baseline="middle" fill="rgba(5, 105, 12, 255)" font-family="osifont" font-size="1.27pt" text-anchor="middle" transform="translate(57.15,48.534) rotate(90)">
 100k
 </text>
-<rect fill="none" height="2.03" stroke="rgba(0, 0, 0, 1)" stroke-width="0.35" width="5.08" x="54.61" y="49.78"/>
-<path d="M53.34,50.8 L54.61,50.8" fill="none" stroke="rgba(0, 0, 0, 1)" stroke-width="0.35"/>
-<path d="M60.960003,50.8 L59.690002,50.8" fill="none" stroke="rgba(0, 0, 0, 1)" stroke-width="0.35"/>
-<rect fill="none" height="1.20" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="1.20" x="60.36" y="50.20"/>
-<circle cx="60.960003" cy="50.8" fill="none" r="0.6" stroke="rgba(155, 255, 12, 1)" stroke-width="0.25"/>
-<rect fill="none" height="10.16" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="15.24" x="60.96" y="48.26"/>
-<rect fill="none" height="1.69" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="2.00" x="67.58" y="43.66"/>
-<text dominant-baseline="middle" fill="rgba(5, 105, 12, 1)" font-family="osifont" font-size="1.27pt" text-anchor="middle" transform="translate(68.58,44.510002)">
+<rect fill="none" height="2.03" stroke="rgba(132, 0, 0, 255)" stroke-width="0.35" width="5.08" x="54.61" y="49.78"/>
+<path d="M53.34,50.8 L54.61,50.8" fill="none" stroke="rgba(132, 0, 0, 255)" stroke-width="0.35"/>
+<path d="M60.960003,50.8 L59.690002,50.8" fill="none" stroke="rgba(132, 0, 0, 255)" stroke-width="0.35"/>
+<circle cx="60.960003" cy="50.8" fill="rgba(0, 150, 0, 255)" r="0.6" stroke="rgba(0, 150, 0, 255)" stroke-width="0.1"/>
+<text dominant-baseline="middle" fill="rgba(5, 105, 12, 255)" font-family="osifont" font-size="1.27pt" text-anchor="middle" transform="translate(68.58,44.510002)">
 U1
 </text>
-<rect fill="none" height="1.69" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="5.00" x="66.08" y="46.16"/>
-<text dominant-baseline="middle" fill="rgba(5, 105, 12, 1)" font-family="osifont" font-size="1.27pt" text-anchor="middle" transform="translate(68.58,47.010002)">
+<text dominant-baseline="middle" fill="rgba(5, 105, 12, 255)" font-family="osifont" font-size="1.27pt" text-anchor="middle" transform="translate(68.58,47.010002)">
 TL072
 </text>
-<path d="M63.5,58.42 L73.66,53.34 L63.5,48.260002 L63.5,58.42" fill="none" stroke="rgba(0, 0, 0, 1)" stroke-width="0.35"/>
-<path d="M76.200005,53.34 L73.66,53.34" fill="none" stroke="rgba(0, 0, 0, 1)" stroke-width="0.35"/>
-<text dominant-baseline="middle" fill="rgba(0, 0, 0, 255)" font-family="osifont" font-size="1.25pt" text-anchor="middle" transform="translate(74.93001,52.59)">
+<path d="M63.5,58.42 L73.66,53.34 L63.5,48.260002 L63.5,58.42" fill="rgba(255, 255, 194, 255)" stroke="rgba(132, 0, 0, 255)" stroke-width="0.35"/>
+<path d="M76.200005,53.34 L73.66,53.34" fill="none" stroke="rgba(132, 0, 0, 255)" stroke-width="0.35"/>
+<text dominant-baseline="middle" fill="rgba(132, 0, 0, 255)" font-family="osifont" font-size="0.25pt" text-anchor="middle" transform="translate(74.93001,52.59)">
 1
 </text>
-<path d="M60.960003,50.8 L63.5,50.8" fill="none" stroke="rgba(0, 0, 0, 1)" stroke-width="0.35"/>
-<text dominant-baseline="middle" fill="rgba(0, 0, 0, 255)" font-family="osifont" font-size="1.25pt" text-anchor="middle" transform="translate(62.230003,50.05)">
+<path d="M60.960003,50.8 L63.5,50.8" fill="none" stroke="rgba(132, 0, 0, 255)" stroke-width="0.35"/>
+<text dominant-baseline="middle" fill="rgba(132, 0, 0, 255)" font-family="osifont" font-size="0.25pt" text-anchor="middle" transform="translate(62.230003,50.05)">
 2
 </text>
-<text dominant-baseline="middle" fill="rgba(255, 0, 0, 255)" font-family="osifont" font-size="1.75pt" text-anchor="left" transform="translate(63.627,50.8)">
+<text dominant-baseline="middle" fill="rgba(132, 0, 0, 255)" font-family="osifont" font-size="0.35pt" text-anchor="middle" transform="translate(61.087,50.8)">
 -
 </text>
-<path d="M60.960003,55.88 L63.5,55.88" fill="none" stroke="rgba(0, 0, 0, 1)" stroke-width="0.35"/>
-<text dominant-baseline="middle" fill="rgba(0, 0, 0, 255)" font-family="osifont" font-size="1.25pt" text-anchor="middle" transform="translate(62.230003,55.13)">
+<path d="M60.960003,55.88 L63.5,55.88" fill="none" stroke="rgba(132, 0, 0, 255)" stroke-width="0.35"/>
+<text dominant-baseline="middle" fill="rgba(132, 0, 0, 255)" font-family="osifont" font-size="0.25pt" text-anchor="middle" transform="translate(62.230003,55.13)">
 3
 </text>
-<text dominant-baseline="middle" fill="rgba(255, 0, 0, 255)" font-family="osifont" font-size="1.75pt" text-anchor="left" transform="translate(63.627,55.88)">
+<text dominant-baseline="middle" fill="rgba(132, 0, 0, 255)" font-family="osifont" font-size="0.35pt" text-anchor="middle" transform="translate(61.087,55.88)">
 +
 </text>
-<rect fill="none" height="1.20" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="1.20" x="75.60" y="52.74"/>
-<circle cx="76.200005" cy="53.34" fill="none" r="0.6" stroke="rgba(155, 255, 12, 1)" stroke-width="0.25"/>
-<rect fill="none" height="-10.16" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="0.00" x="76.20" y="53.34"/>
-<path d="M76.200005,53.34 L76.200005,43.18" fill="none" stroke="rgba(0, 255, 0, 1)" stroke-width="0.35"/>
-<rect fill="none" height="0.00" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="-3.81" x="76.20" y="43.18"/>
-<path d="M76.200005,43.18 L72.39001,43.18" fill="none" stroke="rgba(0, 255, 0, 1)" stroke-width="0.35"/>
-<rect fill="none" height="0.00" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="3.81" x="60.96" y="43.18"/>
-<path d="M60.960003,43.18 L64.770004,43.18" fill="none" stroke="rgba(0, 255, 0, 1)" stroke-width="0.35"/>
-<rect fill="none" height="2.03" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="7.62" x="64.77" y="42.16"/>
-<rect fill="none" height="1.69" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="2.00" x="67.58" y="37.57"/>
-<text dominant-baseline="middle" fill="rgba(5, 105, 12, 1)" font-family="osifont" font-size="1.27pt" text-anchor="middle" transform="translate(68.58001,38.414)">
+<circle cx="76.200005" cy="53.34" fill="rgba(0, 150, 0, 255)" r="0.6" stroke="rgba(0, 150, 0, 255)" stroke-width="0.1"/>
+<path d="M76.200005,53.34 L76.200005,40.64" fill="none" stroke="rgba(0, 150, 0, 255)" stroke-width="0.35"/>
+<path d="M76.200005,40.64 L72.39001,40.64" fill="none" stroke="rgba(0, 150, 0, 255)" stroke-width="0.35"/>
+<path d="M60.960003,40.64 L64.770004,40.64" fill="none" stroke="rgba(0, 150, 0, 255)" stroke-width="0.35"/>
+<text dominant-baseline="middle" fill="rgba(5, 105, 12, 255)" font-family="osifont" font-size="1.27pt" text-anchor="middle" transform="translate(68.58001,35.874) rotate(90)">
 R2
 </text>
-<rect fill="none" height="1.69" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="4.00" x="66.58" y="40.07"/>
-<text dominant-baseline="middle" fill="rgba(5, 105, 12, 1)" font-family="osifont" font-size="1.27pt" text-anchor="middle" transform="translate(68.58001,40.914)">
+<text dominant-baseline="middle" fill="rgba(5, 105, 12, 255)" font-family="osifont" font-size="1.27pt" text-anchor="middle" transform="translate(68.58001,38.374) rotate(90)">
 100k
 </text>
-<rect fill="none" height="2.03" stroke="rgba(0, 0, 0, 1)" stroke-width="0.35" width="5.08" x="66.04" y="42.16"/>
-<path d="M72.39001,43.18 L71.12001,43.18" fill="none" stroke="rgba(0, 0, 0, 1)" stroke-width="0.35"/>
-<path d="M64.77001,43.18 L66.04001,43.18" fill="none" stroke="rgba(0, 0, 0, 1)" stroke-width="0.35"/>
-<rect fill="none" height="7.62" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="0.00" x="60.96" y="43.18"/>
-<path d="M60.960003,43.18 L60.960003,50.8" fill="none" stroke="rgba(0, 255, 0, 1)" stroke-width="0.35"/>
-<rect fill="none" height="2.54" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="2.54" x="59.69" y="55.88"/>
-<rect fill="none" height="1.69" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="3.00" x="59.46" y="58.82"/>
-<text dominant-baseline="middle" fill="rgba(5, 105, 12, 1)" font-family="osifont" font-size="1.27pt" text-anchor="middle" transform="translate(60.960003,59.670002)">
+<rect fill="none" height="2.03" stroke="rgba(132, 0, 0, 255)" stroke-width="0.35" width="5.08" x="66.04" y="39.62"/>
+<path d="M72.39001,40.64 L71.12001,40.64" fill="none" stroke="rgba(132, 0, 0, 255)" stroke-width="0.35"/>
+<path d="M64.77001,40.64 L66.04001,40.64" fill="none" stroke="rgba(132, 0, 0, 255)" stroke-width="0.35"/>
+<path d="M60.960003,40.64 L60.960003,50.8" fill="none" stroke="rgba(0, 150, 0, 255)" stroke-width="0.35"/>
+<text dominant-baseline="middle" fill="rgba(5, 105, 12, 255)" font-family="osifont" font-size="1.27pt" text-anchor="middle" transform="translate(60.960003,59.670002)">
 GND
 </text>
-<path d="M60.960003,55.88 L60.960003,57.15 L62.230003,57.15 L60.960003,58.420002 L59.690002,57.15 L60.960003,57.15" fill="none" stroke="rgba(0, 0, 0, 1)" stroke-width="0.35"/>
-<path d="M60.960003,55.88 L60.960003,55.88" fill="none" stroke="rgba(0, 0, 0, 1)" stroke-width="0.35"/>
-<rect fill="none" height="1.69" stroke="rgba(255, 0, 0, 255)" stroke-width="0.08" width="4.00" x="76.20" y="51.65"/>
-<text dominant-baseline="auto" fill="rgba(5, 105, 12, 1)" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(77.200005,53.34)">
+<path d="M60.960003,55.88 L60.960003,57.15 L62.230003,57.15 L60.960003,58.420002 L59.690002,57.15 L60.960003,57.15" fill="none" stroke="rgba(132, 0, 0, 255)" stroke-width="0.35"/>
+<path d="M60.960003,55.88 L60.960003,55.88" fill="none" stroke="rgba(132, 0, 0, 255)" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="rgba(5, 105, 12, 255)" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(77.200005,53.34)">
 Vout
 </text>
-<rect fill="none" height="22.95" stroke="rgba(255, 0, 0, 255)" stroke-width="0.25" width="32.40" x="47.80" y="37.57"/>
 </svg>
 </svg>

@@ -1,5 +1,5 @@
 [project]
-name = "elektron_rs"
+name = "recad"
 version = "0.1.0"
 authors = [
     {name = "spielhuus", email = "spielhuus@gmail.com"},
@@ -13,6 +13,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 dependencies = [
+    "ipython",
     "matplotlib",
     "matplotlib-backend-kitty",
 ]
@@ -25,5 +26,5 @@ requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
 
 [tool.maturin]
-# "extension-module" tells pyo3 we want to build an extension module (skips linking against libpython.so)
 features = ["pyo3/extension-module"]
+profile = "release"

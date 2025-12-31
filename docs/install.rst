@@ -1,7 +1,7 @@
 Installation
 ============
 
-The elektron package can be installed locally or using the [elektron-docker](https://github.com/spielhuus/elektron-docker) image.
+The recad package can be installed locally or using the [recad-docker](https://github.com/spielhuus/recad-docker) image.
 
 Install from pypi
 -----------------
@@ -21,14 +21,14 @@ Arch Linux
 
     pacman -Sy kicad kicad-library kicad-library-3d python python-pip
 
-Install the `elektron` package from PyPI
+Install the `recad` package from PyPI
 
 .. code-block:: bash
 
     python -m venv --system-site-packages .venv
-    pip install elektron-rs
+    pip install recad
 
-The `--system-site-packages` option is needed to make elektron find the pcbnew packages.
+The `--system-site-packages` option is needed to make recad find the pcbnew packages.
 
 Install the [osifont](https://github.com/hikikomori82/osifont)
 
@@ -61,11 +61,11 @@ Get and compile the code:
 
 .. code-block:: bash
 
-    git clone https://github.com/spielhuus/elektron-rs
-    cd elektron-rs
+    git clone https://github.com/spielhuus/recad
+    cd recad
     make all
 
-The `make` command will create the executable `elektron` in `.venv/bin`.
+The `make` command will create the executable `recad` in `.venv/bin`.
 
 Example usage
 -------------
@@ -73,5 +73,5 @@ Example usage
 .. code-block:: bash
 
     source .venv/bin/activate
-    elektron plot --input your_schema.kicad_sch --output schema.svg
+    recad plot --input your_schema.kicad_sch --output schema.svg
 

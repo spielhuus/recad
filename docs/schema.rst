@@ -8,16 +8,23 @@ Schema
 
    elements
 
-The `elektron` module allows for drawing circuits. The drawing follows the basic structure containing pre-defined elements for use in a drawing. A common import structure is:
+The `recad.Schema` module allows for drawing circuits. The drawing follows the basic structure containing pre-defined elements for use in a drawing. A common import structure is:
 
 .. code-block:: python
-   :linenos:
 
-   from elektron import Draw, Element, Label, Line, Nc, Dot
+   from recad import Schema
 
-.. autoclass:: recad::Schema
+.. autoclass:: recad.Schema
 
-To create a circuit diagram, use a context manager (with statement) on a `schemdraw.Drawing`. Any elements created within the with block will be added to the drawing:
+.. autofunction:: recad.Schema.new
+
+.. autofunction:: recad.Schema.load
+
+.. autofunction:: recad.Schema.write
+
+.. autofunction:: recad.Schema.plot
+
+Example Usage:
 
 .. exec_code::
    :linenos:
@@ -33,17 +40,18 @@ To create a circuit diagram, use a context manager (with statement) on a `schemd
        + Junction()
        + Symbol("U1", "TL072", "Amplifier_Operational:LM2904").anchor("2").mirror("x")
        + Junction()
-       + Wire().up().length(4)
+       + Wire().up().length(5)
        + Symbol("R2", "100k", "Device:R").rotate(270).tox("U1", "2")
        + Wire().toy("U1", "2")
        + Symbol("GND", "GND", "power:GND").at("U1", "3")
        + LocalLabel("Vout").at("U1", "1")
    )
    
-   schema.plot(path = 'docs/_static/schema_opamp.svg')
+   schema.plot(path = 'docs/_static/schema_opamp.svg', scale = 10)
 
 
 .. image:: _static/schema_opamp.svg
    :alt: first circuit
+   :width: 800
 
 

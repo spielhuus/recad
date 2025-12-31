@@ -1,19 +1,35 @@
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 
 use pyo3::{
     exceptions::PyIOError,
     prelude::*,
-    types::{IntoPyDict, PyDict, PyList},
+    pyclass::PyClassGuardError,
+    types::{IntoPyDict, PyBytes, PyDict, PyList, PyString},
 };
 use recad_core::{
     draw::{At, Attribute, Direction},
     gr::Pt,
     plot::{
         theme::{Theme, Themes},
-        Plotter,
+        PlotCommand, Plotter,
     },
     Drawable, Drawer, Plot,
 };
+
+fn is_jupyter() -> bool {
+    Python::with_gil(|py| {
+        let sys = py.import("sys").unwrap();
+        let modules = sys.getattr("modules").unwrap();
+        modules.get_item("ipykernel").ok().is_some() || modules.get_item("notebook").ok().is_some()
+    })
+}
+
+fn is_neovim() -> bool {
+    match std::env::var("LUNGAN") {
+        Ok(value) => value == "neovim",
+        Err(_) => false,
+    }
+}
 
 /// The Schema
 #[pyclass]
@@ -23,7 +39,7 @@ pub struct Schema {
 
 #[pymethods]
 impl Schema {
-    /// create a new Schema
+    /// Create a new Schema
     ///
     /// :param project: the project name
     #[new]
@@ -59,10 +75,19 @@ impl Schema {
 
     /// Plot a schema
     ///
-    /// :param path: the file path
+    /// :param \**kwargs: see below
+    ///
+    /// :Keyword Arguments:
+    ///  * *theme* -- the color theme.
+    ///  * *scale* -- Adjusts the size of the final image, considering only the image area without the border.
+    ///  * *border* -- draw a border or crop the image.
     #[pyo3(signature = (**kwargs))]
-    pub fn plot(&self, kwargs: Option<Bound<PyDict>>) -> PyResult<Option<Py<PyAny>>> {
+    pub fn plot(&self, py: Python, kwargs: Option<Bound<PyDict>>) -> PyResult<Option<Py<PyAny>>> {
         let mut path: Option<String> = None;
+        let mut theme = None;
+        let mut scale = None;
+        let mut border = None;
+        let mut pages: Option<Vec<u8>> = None;
 
         if let Some(kwargs) = kwargs {
             if let Ok(Some(raw_item)) = kwargs.get_item("path") {
@@ -71,35 +96,163 @@ impl Schema {
                     path = Some(item.to_string());
                 }
             }
+            if let Ok(Some(raw_item)) = kwargs.get_item("scale") {
+                let item: Result<f32, PyErr> = raw_item.extract();
+                if let Ok(item) = item {
+                    scale = Some(item);
+                }
+            }
+            if let Ok(Some(raw_item)) = kwargs.get_item("border") {
+                let item: Result<bool, PyErr> = raw_item.extract();
+                if let Ok(item) = item {
+                    border = Some(item);
+                }
+            }
+            if let Ok(Some(raw_item)) = kwargs.get_item("theme") {
+                let item: Result<String, PyErr> = raw_item.extract();
+                if let Ok(item) = item {
+                    theme = Some(Themes::from(item));
+                }
+            }
         }
 
-        let mut svg = recad_core::plot::SvgPlotter::new(); //TODO select plotter
-        self.schema.plot(&mut svg, &Theme::from(Themes::Kicad2020)); //TODO select theme
-
         Ok(if let Some(path) = path {
-            let mut file = std::fs::File::create(path).unwrap();
-            svg.write(&mut file).unwrap();
+            let mut svg = recad_core::plot::SvgPlotter::new(); //TODO select plotter
+            self.schema
+                .plot(
+                    &mut svg,
+                    PlotCommand::default()
+                        .theme(theme)
+                        .scale(scale)
+                        .border(border)
+                        .pages(pages),
+                )
+                .unwrap(); //TODO create error
+            svg.save(&std::path::PathBuf::from(path)).unwrap();
             None
         } else {
-            let mut buffer = Vec::new();
-            svg.write(&mut buffer).unwrap();
+            if is_jupyter() {
+                let mut svg = recad_core::plot::SvgPlotter::new(); //TODO select plotter
+                self.schema
+                    .plot(
+                        &mut svg,
+                        PlotCommand::default()
+                            .theme(theme)
+                            .scale(scale)
+                            .border(border)
+                            .pages(pages),
+                    )
+                    .unwrap(); //TODO create error
+                let mut buffer = Vec::new();
+                svg.write(&mut buffer).unwrap();
+                let py_list = PyList::new(py, buffer.clone()).unwrap();
+                let svg = Python::attach(|py| {
+                    let svg_path: Py<PyAny> = py
+                        .import("IPython")
+                        .unwrap()
+                        .getattr("display")
+                        .unwrap()
+                        .getattr("SVG")
+                        .unwrap()
+                        .into();
+                    let kwargs = [("data", String::from_utf8(buffer.clone()).unwrap())]
+                        .into_py_dict(py)
+                        .unwrap();
+                    svg_path.call(py, (), Some(&kwargs)).unwrap()
+                });
+                Some(svg)
+            } else if is_neovim() {
+                let mut png = recad_core::plot::TinySkiaPlotter::new(); //TODO select plotter
+                if let Some(scale) = scale {
+                    png.scale(scale);
+                }
 
-            let res = Python::with_gil(|py| {
-                let svg_path: Py<PyAny> = py
-                    .import_bound("IPython")
-                    .unwrap()
-                    .getattr("display")
-                    .unwrap()
-                    .getattr("SVG")
-                    .unwrap()
-                    .into();
-                let kwargs = [("data", String::from_utf8(buffer).unwrap())].into_py_dict_bound(py);
-                svg_path
-                    .call_bound(py, (), Some(&kwargs.into_py_dict_bound(py)))
-                    .unwrap()
-            });
-            Some(res)
+                self.schema
+                    .plot(
+                        &mut png,
+                        PlotCommand::default()
+                            .theme(theme)
+                            .scale(scale)
+                            .border(border)
+                            .pages(pages),
+                    )
+                    .unwrap(); //TODO create error
+                let mut buffer = Vec::new();
+                let (width, height) = png.write(&mut buffer).unwrap();
+                let py_list = PyList::new(py, buffer.clone()).unwrap();
+                let plots = PyList::new(py, &[buffer]); // Example data
+
+                let lungan = PyModule::import(py, "lungan").unwrap();
+                // let res = lungan.setattr("PLOTS", (width, height, plots));
+                let args = (width, height, py_list);
+                let res = lungan.call_method("set_plot", args, None);
+                match res {
+                    Ok(_) => {}
+                    Err(err) => {
+                        panic!("can not write to PLOTS {:?}", err);
+                    }
+                }
+                None
+            } else {
+                Some(PyString::new(py, "other").into())
+            }
         })
+        // let mut svg = recad_core::plot::SvgPlotter::new(); //TODO select plotter
+        // self.schema
+        //     .plot(
+        //         &mut svg,
+        //         PlotCommand::default()
+        //             .theme(theme)
+        //             .scale(scale)
+        //             .border(border)
+        //             .pages(pages),
+        //     )
+        //     .unwrap(); //TODO create error
+        //
+        // Ok(if let Some(path) = path {
+        //     svg.save(&std::path::PathBuf::from(path)).unwrap();
+        //     None
+        // } else {
+        //     // search for the lungan python library
+        //
+        //     let mut buffer = Vec::new();
+        //     svg.write(&mut buffer).unwrap();
+        //     let py_list = PyList::new(py, buffer.clone());
+        //
+        //     let res = Python::with_gil(|py| {
+        //         let svg_path: Py<PyAny> = py
+        //             .import_bound("IPython")
+        //             .unwrap()
+        //             .getattr("display")
+        //             .unwrap()
+        //             .getattr("SVG")
+        //             .unwrap()
+        //             .into();
+        //         let kwargs =
+        //             [("data", String::from_utf8(buffer.clone()).unwrap())].into_py_dict_bound(py);
+        //         svg_path
+        //             .call_bound(py, (), Some(&kwargs.into_py_dict_bound(py)))
+        //             .unwrap()
+        //     });
+        //     // let lungan = py.import_bound("lungan");
+        //     // match lungan {
+        //     //     Ok(lungan) => {
+        //     let module = py.import("matplotlib.pyplot")?;
+        //     let plot_func = module.getattr("imshow")?;
+        //
+        //     // Convert SVG data to bytes
+        //     // let svg_bytes: &[u8] = buffer.as_bytes();
+        //
+        //     // Create a PyBytes object from the byte array
+        //     let py_svg_bytes = PyBytes::new(py, buffer.as_slice());
+        //
+        //     // Call the Python function with the SVG bytes
+        //     plot_func.call1((py_svg_bytes,))?;
+        //     Some(py_list.into())
+        //     // }
+        //     // Err(_) => Some(res),
+        //     // }
+        // })
     }
 
     pub fn move_to(mut instance: PyRefMut<'_, Self>, item: (f32, f32)) -> PyRefMut<'_, Self> {
@@ -110,8 +263,12 @@ impl Schema {
         instance
     }
 
+    /// Draw a element to the Schema.
+    ///
+    /// Instread of using `draw` on a schema, you can also add
+    /// the elment using the `+` function.
     pub fn draw<'a>(mut instance: PyRefMut<'a, Self>, item: &Bound<PyAny>) -> PyRefMut<'a, Self> {
-        let label: Result<LocalLabel, PyErr> = item.extract();
+        let label: Result<LocalLabel, PyClassGuardError> = item.extract();
         if let Ok(label) = label {
             let mut final_label = recad_core::schema::LocalLabel::new(&label.name)
                 .attr(Attribute::Rotate(label.rotate));
@@ -123,7 +280,7 @@ impl Schema {
             return instance;
         }
 
-        let symbol: Result<Symbol, PyErr> = item.extract();
+        let symbol: Result<Symbol, PyClassGuardError> = item.extract();
         if let Ok(symbol) = symbol {
             let mut final_symbol =
                 recad_core::schema::Symbol::new(&symbol.reference, &symbol.value, &symbol.lib_id);
@@ -147,7 +304,7 @@ impl Schema {
             return instance;
         }
 
-        let wire: Result<Wire, PyErr> = item.extract();
+        let wire: Result<Wire, PyClassGuardError> = item.extract();
         if let Ok(wire) = wire {
             let mut final_wire = recad_core::schema::Wire::new();
             final_wire = match wire.direction {
@@ -167,7 +324,7 @@ impl Schema {
             return instance;
         }
 
-        let junction: Result<Junction, PyErr> = item.extract();
+        let junction: Result<Junction, PyClassGuardError> = item.extract();
         if let Ok(junction) = junction {
             let final_junction = recad_core::schema::Junction::new();
             instance.schema.draw(final_junction).unwrap(); //TODO
@@ -316,7 +473,7 @@ impl Symbol {
 
     /// Expand the length to the pin horizontally
     ///
-    ///  Draw wires at both the start and finish 
+    ///  Draw wires at both the start and finish
     ///  of the symbol for path completion.
     ///
     /// :param reference: the Symbol label
@@ -332,7 +489,7 @@ impl Symbol {
 
     /// Expand the length to the pin vertically
     ///
-    ///  Draw wires at both the start and finish 
+    ///  Draw wires at both the start and finish
     ///  of the symbol for path completion.
     ///
     /// :param reference: the Symbol label
@@ -359,7 +516,6 @@ impl Symbol {
         instance
     }
 }
-
 
 #[pyclass]
 #[derive(Clone, Default)]
@@ -412,7 +568,7 @@ impl Wire {
 
     /// Draw a line downwards.
     ///
-    /// This function draws a line from the current position to 
+    /// This function draws a line from the current position to
     /// the bottom edge of the canvas.
     pub fn down(mut instance: PyRefMut<'_, Self>) -> PyRefMut<'_, Self> {
         instance.direction = Direction::Down;
