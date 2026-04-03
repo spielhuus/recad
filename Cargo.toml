@@ -1,0 +1,124 @@
+[workspace]
+members =[
+#    "recad_core",
+  "crates/font",
+  "crates/types",
+  "crates/models",
+  "crates/sexp",
+  "crates/plot",
+  "crates/draw",
+  "crates/netlist",
+  "crates/reports",
+  "crates/ngspice",
+  "crates/simulation",
+  "crates/recad",
+]
+resolver = "2"
+
+[workspace.dependencies]
+uuid = { version = "1.2", features = ["v4", "fast-rng", "macro-diagnostics"] }
+spdlog-rs = { version = "0.5", features = ["log"]}
+
+#font dependencies
+fontdue = "0.9"
+ttf-parser = "0.21"
+rust-fontconfig = "2"
+
+# plotter dependencies
+glam = "0.32"
+svg  = "0.18"
+base64 = "0.22"
+
+# webgpu dependencies
+winit = { version = "0.30", default-features = false, features = ["rwh_06", "wayland"]  }
+# log = "0.4"
+wgpu = { version = "27.0.1", features = ["wgsl"] }
+pollster = "0.4"
+bytemuck = { version = "1.24", features = [ "derive" ] }
+
+egui = { version = "0.33.3", default-features = false, features = ["default_fonts"] }
+egui-winit = { version = "0.33.3", default-features = false }
+egui-wgpu = { version = "0.33.3", default-features = false, features = ["winit"] }
+
+# netlist
+petgraph = "0.8"
+indexmap = "2.2.6"
+regex = "1"
+
+#reports
+yaml-rust = "0.4"
+
+#ngspice
+libloading = "0.8"
+
+# [package]
+# name = "recad_core"
+# version = "0.1.0"
+# edition = "2021"
+#
+# [dependencies]
+#
+# petgraph = "0.8"
+# font-kit = "0.14"
+#
+# image = "0.25"
+#
+# colored = "3"
+#
+# # webgpu dependencies
+# winit = { version = "0.30", default-features = false, features = ["rwh_06", "wayland"]  }
+# # log = "0.4"
+# wgpu = { version = "27.0.1", features = ["wgsl"] }
+# pollster = "0.4"
+# bytemuck = { version = "1.24", features = [ "derive" ] }
+#
+# egui = { version = "0.33.3", default-features = false, features = ["default_fonts"] }
+# egui-winit = { version = "0.33.3", default-features = false }
+# egui-wgpu = { version = "0.33.3", default-features = false, features = ["winit"] }
+#
+# # for the reports
+#
+# # for ngspice
+# libloading = "0.8"
+#
+# # for 3d rendering
+# # opencascade = "0.2.0"
+#
+# #gerber
+# hershey = "0.1"
+#
+# [dev-dependencies]
+# similar = "2.7"
+# insta = { version = "1", features = ["yaml"] }
+#
+# [build-dependencies]
+# bindgen = "0"
+#
+# [[examples]]
+# name = "svg_plt"
+# path = "examples/svg_plt.rs"
+#
+# [[examples]]
+# name = "netlist"
+# path = "examples/netlist.rs"
+#
+# [[examples]]
+# name = "sim"
+# path = "examples/sim.rs"
+#
+# [[examples]]
+# name = "erc"
+# path = "examples/erc.rs"
+#
+# [[examples]]
+# name = "gerber"
+# path = "examples/gerber.rs"
+#
+# [[bom]]
+# name = "bom"
+# path = "examples/bom.rs"
+
+
+# [[examples]]
+# name = "wgpu"
+# path = "examples/wgpu.rs"

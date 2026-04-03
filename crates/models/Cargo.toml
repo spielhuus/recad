@@ -1,0 +1,14 @@
+[package]
+name = "models"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+types = { path = "../types" }
+font = { path = "../font" }
+sexp = { path = "../sexp" }
+
+uuid.workspace = true
+glam.workspace = true
+spdlog-rs.workspace = true

@@ -1,0 +1,72 @@
+[package]
+name = "recad"
+version = "0.1.0"
+edition = "2021"
+
+# Define the features users can toggle
+# [features]
+# default =["models", "svg", "reports"]
+# spice = ["dep:recad_spice"]
+# wgpu = ["recad_plot/wgpu"]
+# svg = ["recad_plot/svg"]
+# gerber = ["recad_plot/gerber"]
+# reports = ["dep:recad_reports"]
+# models = ["dep:recad_models"]
+
+#font  models  plot  recad  reports  sexp  spice  types
+
+[dependencies]
+# Required base dependencies
+types = { path = "../types" }
+sexp = { path = "../sexp" }
+models = { path = "../models" }
+draw = { path = "../draw" }
+reports = { path = "../reports" }
+netlist = { path = "../netlist" }
+ngspice = { path = "../ngspice" }
+simulation = { path = "../simulation" }
+
+# recad_reports = { path = "../crates/reports" }
+plot = { path = "../plot" }
+
+spdlog-rs.workspace = true
+
+[dev-dependencies]
+# webgpu dependencies
+winit.workspace = true
+# log = "0.4"
+wgpu.workspace = true
+pollster.workspace = true
+bytemuck.workspace = true
+
+egui.workspace = true
+egui-winit.workspace = true
+egui-wgpu.workspace = true
+
+[[examples]]
+name = "bom"
+path = "examples/bom.rs"
+
+[[examples]]
+name = "erc"
+path = "examples/erc.rs"
+
+[[examples]]
+name = "gerber"
+path = "examples/gerber.rs"
+
+[[examples]]
+name = "sim"
+path = "examples/sim.rs"
+
+[[examples]]
+name = "svg_plot"
+path = "examples/svg_plot.rs"
+
+[[examples]]
+name = "wgpu_3d"
+path = "examples/wgpu_3d.rs"
+
+[[examples]]
+name = "wgpu"
+path = "examples/wgpu.rs"

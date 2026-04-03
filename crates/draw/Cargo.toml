@@ -1,0 +1,18 @@
+[package]
+name = "draw"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+types = { path = "../types" }
+font = { path = "../font" }
+models = { path = "../models" }
+
+uuid.workspace = true
+spdlog-rs.workspace = true
+# glam.workspace = true
+# fontdue.workspace = true
+# ttf-parser.workspace = true
+
+# svg.workspace = true
+# base64.workspace = true

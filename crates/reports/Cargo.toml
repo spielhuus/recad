@@ -1,0 +1,13 @@
+[package]
+name = "reports"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+types = { path = "../types" }
+models = { path = "../models" }
+netlist = { path = "../netlist" }
+
+spdlog-rs.workspace = true
+yaml-rust.workspace = true
+

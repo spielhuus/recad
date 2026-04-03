@@ -1,0 +1,17 @@
+[package]
+name = "netlist"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+types = { path = "../types" }
+models = { path = "../models" }
+
+spdlog-rs.workspace = true
+# glam.workspace = true
+
+petgraph.workspace = true
+indexmap.workspace = true
+regex.workspace = true
+
+

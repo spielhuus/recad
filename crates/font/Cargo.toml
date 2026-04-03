@@ -1,0 +1,13 @@
+[package]
+name = "font"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+types = { path = "../types" }
+
+fontdue.workspace = true
+glam.workspace = true 
+rust-fontconfig.workspace = true
+
+
