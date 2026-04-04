@@ -19,7 +19,7 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libwayland-dev wayland-protocols ngspice pkg-config
+        sudo apt-get install -y libwayland-dev wayland-protocols ngspice-dev pkg-config
     - name: Build
       run: cargo build --verbose
     - name: Run tests
