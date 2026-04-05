@@ -1,8 +1,5 @@
 |              |    |
 |--------------|----|
-![GitHub Tag](https://img.shields.io/github/v/tag/spielhuus/recad_core)
-[![Deploy](https://github.com/spielhuus/recad_core/actions/workflows/rust.yml/badge.svg)](https://github.com/spielhuus/recad_core/actions/workflows/rust.yml)
-
 | Build Status | [![build](https://img.shields.io/github/actions/workflow/status/spielhuus/recad/rust.yml?branch=main&label=Build&style=for-the-badge)](https://github.com/spielhuus/recad/actions/workflows/rust.yml) [![build](https://img.shields.io/github/actions/workflow/status/spielhuus/recad/doc.yml?branch=main&label=Doc&style=for-the-badge)](https://spielhuus.github.io/recad/)
 | License      | [![License-MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](https://github.com/spielhuus/yalua/blob/main/LICENSE)|
 
