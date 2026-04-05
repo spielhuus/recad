@@ -3,7 +3,6 @@ use types::{constants::el, error::RecadError, gr::Pos};
 
 use crate::schema::Property;
 
-mod footprint;
 pub mod pcb;
 pub mod schema;
 pub mod geometry;
@@ -11,7 +10,6 @@ pub mod symbols;
 pub mod transform;
 pub mod library; 
 
-// TODO where to place this
 ///create an UUID.
 #[macro_export]
 macro_rules! uuid {

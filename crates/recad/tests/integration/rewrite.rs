@@ -11,7 +11,7 @@ fn init() {
 }
 
 #[test]
-fn echo() {
+fn rewrite_echo() {
     init();
 
     let left = "tests/files/echo/echo.kicad_sch";

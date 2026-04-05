@@ -81,7 +81,7 @@ pub struct Wgpu3dPlotter {
     pending_indices: Vec<usize>,
     current_pos: Pt,
 
-    proxy: Option<winit::event_loop::EventLoopProxy<super::wgpu::UserEvent>>,
+    _proxy: Option<winit::event_loop::EventLoopProxy<super::wgpu::UserEvent>>, //TODO is this used for wasm?
     state: Option<State3D>,
     user_zoom: f64,
     user_pan: Pt,
@@ -102,7 +102,7 @@ impl Wgpu3dPlotter {
     pub fn new(event_loop: &EventLoop<super::wgpu::UserEvent>) -> Self {
         Wgpu3dPlotter {
             state: None,
-            proxy: Some(event_loop.create_proxy()),
+            _proxy: Some(event_loop.create_proxy()),
             viewbox: None,
             data: Vec::new(),
             pending_text: Vec::new(),

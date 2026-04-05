@@ -23,7 +23,7 @@ test: ## run all the test cases.
 	RUST_LOG=debug cargo --quiet test -- --nocapture
 
 doc: $(SOURCES) ## create the rust documentation.
-	cargo doc --no-deps --lib --quiet
+	cargo doc --no-deps --quiet --package=recad --lib --all-features
 
 .PHONY: help
 

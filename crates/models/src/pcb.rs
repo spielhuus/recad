@@ -8,9 +8,6 @@ use types::{
 };
 
 use sexp::{Sexp, SexpExt, SexpTree, SexpValue, SexpValueExt};
-// use crate::{
-//     DRCViolation, Pcb, Schema, error::RecadError, gr::{Effects, Pos, Pt, Pts, Stroke}, reports::drc::Drc
-// };
 
 ///Pcb file format for all versions of KiCad from 6.0.
 #[derive(Default, Debug)]
@@ -1091,7 +1088,7 @@ impl GraphicItem {
                 GraphicItem::FpPoly(item) => layer.contains(&item.layer),
                 GraphicItem::FpText(item) => layer.contains(&item.layer),
                 GraphicItem::FpProperty(item) => {
-                    item.layer.as_ref().map_or(false, |l| layer.contains(l))
+                    item.layer.as_ref().is_some_and(|l| layer.contains(l))
                 }
                 GraphicItem::AnnotationBoundingBox => false,
             }

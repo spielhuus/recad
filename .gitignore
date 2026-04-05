@@ -3,3 +3,4 @@ Cargo.lock
 test.kicad_sch
 .venv
 logs/
+**/.history/

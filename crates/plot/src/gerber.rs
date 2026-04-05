@@ -442,6 +442,7 @@ impl Plotter for GerberPlotter {
                     let mut depths = vec![0; builder.paths.len()];
 
                     // Calculate Geometric Inclusion (Depth) using robust PIP
+                    #[allow(clippy::needless_range_loop)]
                     for i in 0..builder.paths.len() {
                         for j in 0..builder.paths.len() {
                             if i == j { continue; }

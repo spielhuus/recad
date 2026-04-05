@@ -1,10 +1,9 @@
 use std::{
-    collections::HashMap, env, path::{Path, PathBuf}, sync::Arc
+    path::{Path, PathBuf}, sync::Arc
 };
 
 mod common;
 
-use models::schema::Schema;
 use netlist::{CircuitGraph, Netlist};
 use ngspice::NgSpiceError;
 use spdlog::sink::FileSink;

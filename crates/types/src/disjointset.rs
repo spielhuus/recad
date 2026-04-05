@@ -15,6 +15,7 @@ use std::collections::HashMap;
 ///
 /// * `parent` - A mapping from each grid point to its parent in the disjoint set forest.
 ///   If a point is its own parent (i.e., maps to itself), it is the root of its set.
+#[derive(Default)]
 pub struct DisjointSet {
     parent: HashMap<GridPt, GridPt>,
 }

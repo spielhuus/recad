@@ -3,7 +3,6 @@ use types::{constants::el, error::RecadError};
 
 use crate::symbols::LibrarySymbol;
 
-
 ///implement the symbol library.
 pub struct SymbolLibrary {
     pub pathlist: Vec<std::path::PathBuf>,
@@ -57,5 +56,29 @@ impl SymbolLibrary {
             "can not find library: {}",
             name
         )))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use super::*;
+
+    #[test]
+    fn test_resistor() {
+        let library = SymbolLibrary{pathlist: vec![PathBuf::from("/usr/share/kicad/symbols")]};
+        let res = library.load("Device:R").unwrap();
+        assert_eq!(res.lib_id, "Device:R");
+        for prop in &res.props {
+            println!("prop: {}", prop.key);
+            if ["Reference", "Value"].contains(&prop.key.as_str()) {
+                assert!(prop.visible());
+            } else if ["Footprint", "Datasheet", "Description", "ki_keywords", "ki_fp_filters"].contains(&prop.key.as_str()) {
+                assert!(!prop.visible());
+            } else {
+                todo!("unknown property: {}", prop.key);
+            }
+        }
     }
 }

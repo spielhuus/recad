@@ -1677,46 +1677,7 @@ impl Schema {
 
         Ok(())
     }
-
-    // pub fn partlist(
-    //     &self,
-    //     group: bool,
-    //     partlist: Option<PathBuf>,
-    // ) -> Result<(Vec<BomItem>, Option<Vec<BomItem>>), RecadError> {
-    //     crate::reports::bom::bom(self, group, partlist)
-    // }
-
-    // pub fn erc(&self) -> Vec<ERCViolation> {
-    //     let checker = Erc::new(self);
-    //     checker.run()
-    // }
 }
-
-// impl fmt::Display for Schema {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         let mut writer = Vec::new();
-//         self.write(&mut writer).unwrap();
-//         String::from_utf8(writer).unwrap().fmt(f)
-//     }
-// }
-
-// #[derive(Debug, Clone, Default)]
-// pub struct Feedback {
-//     pub atref: Option<(String, String)>,
-//     pub toref: Option<(String, String)>,
-//     pub with: Option<Symbol>,
-//     pub height: f64,
-//     pub dot: Option<Vec<crate::draw::DotPosition>>,
-// }
-
-// impl Feedback {
-//     pub fn new() -> Self {
-//         Self {
-//             height: 5.0 * 2.54,
-//             ..Default::default()
-//         }
-//     }
-// }
 
 impl<'a> std::convert::TryFrom<SexpTree<'a>> for Schema {
     type Error = RecadError;
@@ -1828,61 +1789,61 @@ pub enum SchemaItem {
     Wire(Wire),
 }
 
-// #[cfg(test)]
-// mod tests {
-//
-//     pub const SCHEMA_SUMME: &str = "tests/summe/summe.kicad_sch";
-//     use std::path::Path;
-//
-//     use crate::{
-//         schema::{Schema, SchemaItem, Symbol},
-//     };
-//
-//     #[test]
-//     fn symbol_property() {
-//         let schema = Schema::load(Path::new(SCHEMA_SUMME), None).unwrap();
-//         let symbol = schema
-//             .items
-//             .iter()
-//             .filter_map(|s| match s {
-//                 SchemaItem::Symbol(s) => Some(s),
-//                 _ => None,
-//             })
-//             .collect::<Vec<&Symbol>>()[0];
-//         assert_eq!("J2".to_string(), symbol.property("Reference").unwrap());
-//     }
-//
-//     #[test]
-//     fn get_symbol() {
-//         let schema = Schema::load(Path::new(SCHEMA_SUMME), None).unwrap();
-//         let symbol = schema.symbol("U1", 1).unwrap();
-//         assert_eq!("U1", symbol.property("Reference").unwrap());
-//     }
-//
-//     #[test]
-//     fn get_lib_symbol() {
-//         let schema = Schema::load(Path::new(SCHEMA_SUMME), None).unwrap();
-//         let symbol = schema.symbol("U1", 1).unwrap();
-//         let lib_symbol = schema.library_symbol(&symbol.lib_id).unwrap();
-//         assert_eq!(
-//             "Reference_Voltage:LM4040DBZ-5".to_string(),
-//             lib_symbol.lib_id
-//         );
-//     }
-//
-//     #[test]
-//     fn get_lib_symbol_unit() {
-//         let schema = Schema::load(Path::new(SCHEMA_SUMME), None).unwrap();
-//         let symbol = schema.symbol("U1", 1).unwrap();
-//         let lib_symbol = schema.library_symbol(&symbol.lib_id).unwrap();
-//
-//         let mut iter = lib_symbol.units.iter();
-//         let first = iter.next().unwrap();
-//         assert_eq!(0, first.unit());
-//         assert_eq!(1, first.style());
-//
-//         let second = iter.next().unwrap();
-//         assert_eq!(1, second.unit());
-//         assert_eq!(1, second.style());
-//     }
-// }
+#[cfg(test)]
+mod tests {
+
+    pub const SCHEMA_SUMME: &str = "../../crates/recad/tests/files/summe/summe.kicad_sch";
+    use std::path::Path;
+
+    use crate::{
+        schema::{Schema, SchemaItem, Symbol},
+    };
+
+    #[test]
+    fn symbol_property() {
+        let schema = Schema::load(Path::new(SCHEMA_SUMME), None).unwrap();
+        let symbol = schema
+            .items
+            .iter()
+            .filter_map(|s| match s {
+                SchemaItem::Symbol(s) => Some(s),
+                _ => None,
+            })
+            .collect::<Vec<&Symbol>>()[0];
+        assert_eq!("J2".to_string(), symbol.property("Reference").unwrap());
+    }
+
+    #[test]
+    fn get_symbol() {
+        let schema = Schema::load(Path::new(SCHEMA_SUMME), None).unwrap();
+        let symbol = schema.symbol("U1", 1).unwrap();
+        assert_eq!("U1", symbol.property("Reference").unwrap());
+    }
+
+    #[test]
+    fn get_lib_symbol() {
+        let schema = Schema::load(Path::new(SCHEMA_SUMME), None).unwrap();
+        let symbol = schema.symbol("U1", 1).unwrap();
+        let lib_symbol = schema.library_symbol(&symbol.lib_id).unwrap();
+        assert_eq!(
+            "Reference_Voltage:LM4040DBZ-5".to_string(),
+            lib_symbol.lib_id
+        );
+    }
+
+    #[test]
+    fn get_lib_symbol_unit() {
+        let schema = Schema::load(Path::new(SCHEMA_SUMME), None).unwrap();
+        let symbol = schema.symbol("U1", 1).unwrap();
+        let lib_symbol = schema.library_symbol(&symbol.lib_id).unwrap();
+
+        let mut iter = lib_symbol.units.iter();
+        let first = iter.next().unwrap();
+        assert_eq!(0, first.unit());
+        assert_eq!(1, first.style());
+
+        let second = iter.next().unwrap();
+        assert_eq!(1, second.unit());
+        assert_eq!(1, second.style());
+    }
+}

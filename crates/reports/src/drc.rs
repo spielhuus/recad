@@ -1,9 +1,9 @@
-use std::collections::{HashMap, HashSet};
 use netlist::Netlist;
+use std::collections::{HashMap, HashSet};
 use types::{
-  constants::el,
-  disjointset::DisjointSet,
-  gr::{GridPt, Pt},
+    constants::el,
+    disjointset::DisjointSet,
+    gr::{GridPt, Pt},
 };
 
 use models::{
@@ -39,10 +39,10 @@ pub struct Drc<'a> {
 impl<'a> Drc<'a> {
     pub fn new(pcb: &'a Pcb, schema: &'a Schema) -> Self {
         let netlist = Netlist::from(schema);
-        Self { 
-            pcb, 
-            schema, 
-            netlist 
+        Self {
+            pcb,
+            schema,
+            netlist,
         }
     }
 
@@ -53,10 +53,10 @@ impl<'a> Drc<'a> {
         self.check_track_widths(&mut violations);
         self.check_via_sizes(&mut violations);
         self.check_items_on_board(&mut violations);
-        
+
         // Logical LVS parity checks (Schema vs PCB definitions)
         self.check_schematic_parity(&mut violations);
-        
+
         // Physical copper connectivity checks
         self.check_connectivity(&mut violations);
 
@@ -69,12 +69,16 @@ impl<'a> Drc<'a> {
         if let Some(r) = fp.property.get("Reference") {
             return r.clone();
         }
-        
+
         // Method 2: Fallback to graphic_items where old KiCad text fields reside
         for item in &fp.graphic_items {
             match item {
-                GraphicItem::FpText(text) if text.text_type == "reference" => return text.text.clone(),
-                GraphicItem::FpProperty(prop) if prop.name == "Reference" => return prop.value.clone(),
+                GraphicItem::FpText(text) if text.text_type == "reference" => {
+                    return text.text.clone()
+                }
+                GraphicItem::FpProperty(prop) if prop.name == "Reference" => {
+                    return prop.value.clone()
+                }
                 _ => {}
             }
         }
@@ -112,9 +116,12 @@ impl<'a> Drc<'a> {
             for pad in &fp.pads {
                 let pin_id = (ref_des.clone(), pad.number.clone());
                 pcb_pin_to_net.insert(pin_id.clone(), pad.net.ordinal);
-                
+
                 if pad.net.ordinal > 0 {
-                    pcb_nets_to_pins.entry(pad.net.ordinal).or_default().push(pin_id);
+                    pcb_nets_to_pins
+                        .entry(pad.net.ordinal)
+                        .or_default()
+                        .push(pin_id);
                 }
             }
         }
@@ -125,7 +132,10 @@ impl<'a> Drc<'a> {
                 violations.push(DRCViolation {
                     level: DRCLevel::Error,
                     title: "Missing Footprint".to_string(),
-                    description: format!("Schematic component '{}' is missing on the PCB.", sch_ref),
+                    description: format!(
+                        "Schematic component '{}' is missing on the PCB.",
+                        sch_ref
+                    ),
                     position: Pt::default(),
                     markers: vec![],
                 });
@@ -139,7 +149,10 @@ impl<'a> Drc<'a> {
                 violations.push(DRCViolation {
                     level: DRCLevel::Warning,
                     title: "Extra Footprint".to_string(),
-                    description: format!("PCB footprint '{}' is not present in the schematic.", ref_des),
+                    description: format!(
+                        "PCB footprint '{}' is not present in the schematic.",
+                        ref_des
+                    ),
                     position: Pt::from(fp.pos),
                     markers: vec![],
                 });
@@ -154,7 +167,9 @@ impl<'a> Drc<'a> {
             }
 
             // Ignore nets that don't bridge components
-            if net_data.pins.len() < 2 { continue; }
+            if net_data.pins.len() < 2 {
+                continue;
+            }
 
             let mut pcb_net_set = HashSet::new();
             let mut pcb_net_names = HashSet::new();
@@ -165,7 +180,9 @@ impl<'a> Drc<'a> {
                     pcb_net_set.insert(pcb_net_ord);
                     if pcb_net_ord == 0 {
                         pcb_net_names.insert("Unconnected".to_string());
-                    } else if let Some(net) = self.pcb.nets.iter().find(|n| n.ordinal == pcb_net_ord) {
+                    } else if let Some(net) =
+                        self.pcb.nets.iter().find(|n| n.ordinal == pcb_net_ord)
+                    {
                         pcb_net_names.insert(net.name.clone());
                     }
                 } else {
@@ -178,7 +195,10 @@ impl<'a> Drc<'a> {
                     violations.push(DRCViolation {
                         level: DRCLevel::Error,
                         title: "Missing Pad".to_string(),
-                        description: format!("Schematic connects {}-{}, but the pad does not exist on the PCB.", pin.0, pin.1),
+                        description: format!(
+                            "Schematic connects {}-{}, but the pad does not exist on the PCB.",
+                            pin.0, pin.1
+                        ),
                         position: Pt::default(),
                         markers: vec![],
                     });
@@ -202,7 +222,9 @@ impl<'a> Drc<'a> {
         // 6. Net Check: Short Circuits PCB -> Schematic
         // Ensure that pins grouped in the same PCB net actually belong to the same Schematic net
         for (pcb_net_ord, pcb_pins) in pcb_nets_to_pins {
-            if pcb_pins.len() < 2 { continue; }
+            if pcb_pins.len() < 2 {
+                continue;
+            }
 
             let mut sch_net_set = HashSet::new();
             for pin in &pcb_pins {
@@ -212,10 +234,14 @@ impl<'a> Drc<'a> {
             }
 
             if sch_net_set.len() > 1 {
-                let pcb_net_name = self.pcb.nets.iter().find(|n| n.ordinal == pcb_net_ord)
+                let pcb_net_name = self
+                    .pcb
+                    .nets
+                    .iter()
+                    .find(|n| n.ordinal == pcb_net_ord)
                     .map(|n| n.name.clone())
                     .unwrap_or_default();
-                    
+
                 violations.push(DRCViolation {
                     level: DRCLevel::Error,
                     title: "Short Circuit".to_string(),
@@ -232,9 +258,12 @@ impl<'a> Drc<'a> {
 
     /// Check if any track segment violates the minimum track width
     fn check_track_widths(&self, violations: &mut Vec<DRCViolation>) {
-        let min_width = self.pcb.setup.as_ref()
+        let min_width = self
+            .pcb
+            .setup
+            .as_ref()
             .and_then(|s| s.solder_mask_min_width)
-            .unwrap_or(0.2); 
+            .unwrap_or(0.2);
 
         for track in &self.pcb.segments {
             if track.width < min_width {
@@ -254,8 +283,8 @@ impl<'a> Drc<'a> {
 
     /// Check if any via violates the minimum via size or drill
     fn check_via_sizes(&self, violations: &mut Vec<DRCViolation>) {
-        let min_via_size = 0.4;  
-        let min_via_drill = 0.2; 
+        let min_via_size = 0.4;
+        let min_via_drill = 0.2;
 
         for via in &self.pcb.vias {
             if via.size < min_via_size {
@@ -295,10 +324,10 @@ impl<'a> Drc<'a> {
         let mut has_outline = false;
 
         // Iterate through graphical lines specifically on Edge.Cuts to find board boundary bounds
-        for line in &self.pcb.gr_lines { 
+        for line in &self.pcb.gr_lines {
             if line.layer == "Edge.Cuts" {
                 has_outline = true;
-                let pts =[line.start, line.end];
+                let pts = [line.start, line.end];
                 for p in pts {
                     min_x = min_x.min(p.x);
                     min_y = min_y.min(p.y);
@@ -309,7 +338,7 @@ impl<'a> Drc<'a> {
         }
 
         if !has_outline {
-            return; 
+            return;
         }
 
         // Iterate through footprints checking if their pos falls outside the rect
@@ -344,7 +373,10 @@ impl<'a> Drc<'a> {
         let mut net_segments = HashMap::new();
         for seg in &self.pcb.segments {
             if seg.net > 0 {
-                net_segments.entry(seg.net).or_insert_with(Vec::new).push(seg);
+                net_segments
+                    .entry(seg.net)
+                    .or_insert_with(Vec::new)
+                    .push(seg);
             }
         }
 
@@ -393,8 +425,14 @@ impl<'a> Drc<'a> {
                 }
 
                 if !is_connected && pads.len() > 1 {
-                    let fp_ref = self.pcb.footprints.iter().find(|f| f.pads.iter().any(|p| p.uuid == pad.uuid)).map(|f| Self::get_reference(f)).unwrap_or_default();
-                    
+                    let fp_ref = self
+                        .pcb
+                        .footprints
+                        .iter()
+                        .find(|f| f.pads.iter().any(|p| p.uuid == pad.uuid))
+                        .map(Self::get_reference)
+                        .unwrap_or_default();
+
                     // Completely physically unconnected pin
                     violations.push(DRCViolation {
                         level: DRCLevel::Error,
@@ -424,7 +462,8 @@ impl<'a> Drc<'a> {
                         title: "Unrouted Net / Broken Topology".to_string(),
                         description: format!(
                             "Net '{}' is physically broken into {} unconnected segments/islands.",
-                            pads[0].net.name, distinct_roots.len()
+                            pads[0].net.name,
+                            distinct_roots.len()
                         ),
                         position: Pt::from(pads[0].pos),
                         markers: pads.iter().map(|p| Pt::from(p.pos)).collect(),
@@ -447,7 +486,7 @@ impl<'a> Drc<'a> {
         let local_x = dx * cos_a - dy * sin_a;
         let local_y = dx * sin_a + dy * cos_a;
 
-        // Approximate pad as a rectangle for collision detection. 
+        // Approximate pad as a rectangle for collision detection.
         let half_w = pad.size.0 / 2.0;
         let half_h = pad.size.1 / 2.0;
 

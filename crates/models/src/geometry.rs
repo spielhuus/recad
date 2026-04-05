@@ -164,48 +164,47 @@ impl Bbox for Property {
     }
 }
 
-// TODO 
-// #[cfg(test)]
-// mod tests {
-//     use std::path::PathBuf;
-//
-//     use crate::{math::bbox::Bbox, schema::SchemaItem, Schema, SymbolLibrary};
-//
-//     #[test]
-//     fn test_bbox_symbol_1() {
-//         let lib = SymbolLibrary {
-//             pathlist: vec![PathBuf::from("/usr/share/kicad/symbols")],
-//         };
-//         let mut schema = Schema::new("test_bbox", None);
-//         let lib_sym = lib.load("Amplifier_Operational:LM2904").unwrap();
-//         let sym = lib_sym.symbol(1);
-//         schema.library_symbols.push(lib_sym);
-//         schema.items.push(SchemaItem::Symbol(sym.clone()));
-//         assert_eq!("Amplifier_Operational:LM2904", sym.lib_id);
-//
-//         let bbox = sym.outline(&schema).unwrap();
-//         // Values rounded for robust float comparison if necessary, but here we use exact match from previous test expectations
-//         assert_eq!(-7.62, bbox.start.x);
-//         assert_eq!(-5.08, bbox.start.y);
-//         assert_eq!(7.62, bbox.end.x);
-//         assert_eq!(5.08, bbox.end.y);
-//     }
-//     #[test]
-//     fn test_bbox_symbol_3() {
-//         let lib = SymbolLibrary {
-//             pathlist: vec![PathBuf::from("/usr/share/kicad/symbols")],
-//         };
-//         let mut schema = Schema::new("test_bbox", None);
-//         let lib_sym = lib.load("Amplifier_Operational:LM2904").unwrap();
-//         let sym = lib_sym.symbol(3);
-//         schema.library_symbols.push(lib_sym);
-//         schema.items.push(SchemaItem::Symbol(sym.clone()));
-//         assert_eq!("Amplifier_Operational:LM2904", sym.lib_id);
-//
-//         let bbox = sym.outline(&schema).unwrap();
-//         assert_eq!(-2.54, (bbox.start.x * 100.0).round() / 100.0);
-//         assert_eq!(-7.62, (bbox.start.y * 100.0).round() / 100.0);
-//         assert_eq!(-2.54, (bbox.end.x * 100.0).round() / 100.0);
-//         assert_eq!(7.62, (bbox.end.y * 100.0).round() / 100.0);
-//     }
-// }
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use crate::{schema::SchemaItem, schema::Schema, library::SymbolLibrary};
+
+    #[test]
+    fn test_bbox_symbol_1() {
+        let lib = SymbolLibrary {
+            pathlist: vec![PathBuf::from("/usr/share/kicad/symbols")],
+        };
+        let mut schema = Schema::new("test_bbox", None);
+        let lib_sym = lib.load("Amplifier_Operational:LM2904").unwrap();
+        let sym = lib_sym.symbol(1);
+        schema.library_symbols.push(lib_sym.clone());
+        schema.items.push(SchemaItem::Symbol(sym.clone()));
+        assert_eq!("Amplifier_Operational:LM2904", sym.lib_id);
+
+        let bbox = sym.outline(&lib_sym).unwrap();
+        // Values rounded for robust float comparison if necessary, but here we use exact match from previous test expectations
+        assert_eq!(-7.62, bbox.start.x);
+        assert_eq!(-5.08, bbox.start.y);
+        assert_eq!(7.62, bbox.end.x);
+        assert_eq!(5.08, bbox.end.y);
+    }
+    #[test]
+    fn test_bbox_symbol_3() {
+        let lib = SymbolLibrary {
+            pathlist: vec![PathBuf::from("/usr/share/kicad/symbols")],
+        };
+        let mut schema = Schema::new("test_bbox", None);
+        let lib_sym = lib.load("Amplifier_Operational:LM2904").unwrap();
+        let sym = lib_sym.symbol(3);
+        schema.library_symbols.push(lib_sym.clone());
+        schema.items.push(SchemaItem::Symbol(sym.clone()));
+        assert_eq!("Amplifier_Operational:LM2904", sym.lib_id);
+
+        let bbox = sym.outline(&lib_sym).unwrap();
+        assert_eq!(-2.54, (bbox.start.x * 100.0).round() / 100.0);
+        assert_eq!(-7.62, (bbox.start.y * 100.0).round() / 100.0);
+        assert_eq!(-2.54, (bbox.end.x * 100.0).round() / 100.0);
+        assert_eq!(7.62, (bbox.end.y * 100.0).round() / 100.0);
+    }
+}

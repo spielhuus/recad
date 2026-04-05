@@ -365,7 +365,7 @@ fn plot_fp_graphic(
     plotter: &mut impl Plotter,
     transform: &Transform,
     item: &GraphicItem,
-    fp_pos: Pos,
+    _fp_pos: Pos, //TODO check if this is used
     item_color: Color,
     is_flipped: bool,
 ) {
