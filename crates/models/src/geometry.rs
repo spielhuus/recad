@@ -158,87 +158,8 @@ impl Bbox for Wire {
     }
 }
 
-// impl Bbox for Symbol {
-//     fn outline(&self, schema: &Schema) -> Result<Rect, RecadError> {
-//         let lib_symbol = schema.library_symbol(&self.lib_id).ok_or_else(||
-//             RecadError::Schema(format!("Library symbol not found: {}", self.lib_id)))?;
-//
-//         // Symbol transformation: Translation -> Rotation -> Mirror (Scale)
-//         let transform = Transform::new()
-//             .translation(Pt {
-//                 x: self.pos.x,
-//                 y: self.pos.y,
-//             })
-//             .mirror(&self.mirror)
-//             .rotation(self.pos.angle);
-//
-//         let mut pts = Vec::new();
-//         for s in &lib_symbol.units {
-//             if s.unit() == 0 || s.unit() == self.unit {
-//                 for g in &s.graphics {
-//                     match g {
-//                         GraphicItem::Arc(arc) => {
-//                             // Approximate arc with start, mid, end for bbox
-//                             pts.push(transform.transform_point(arc.start));
-//                             pts.push(transform.transform_point(arc.mid));
-//                             pts.push(transform.transform_point(arc.end));
-//                         }
-//                         GraphicItem::Circle(circle) => {
-//                             pts.push(transform.transform_point(Pt {
-//                                 x: circle.center.x - circle.radius,
-//                                 y: circle.center.y - circle.radius,
-//                             }));
-//                             pts.push(transform.transform_point(Pt {
-//                                 x: circle.center.x + circle.radius,
-//                                 y: circle.center.y + circle.radius,
-//                             }));
-//                         }
-//                         GraphicItem::Curve(_) => { todo!{"bbox for curve not implemented!"}}
-//                         GraphicItem::Line(line) => {
-//                             for p in &line.pts.0 {
-//                                 pts.push(transform.transform_point(*p));
-//                             }
-//                         }
-//                         GraphicItem::Polyline(poly) => {
-//                             for p in &poly.pts.0 {
-//                                 pts.push(transform.transform_point(*p));
-//                             }
-//                         }
-//                         GraphicItem::Rectangle(rect) => {
-//                             pts.push(transform.transform_point(rect.start));
-//                             pts.push(transform.transform_point(rect.end));
-//                         }
-//                         GraphicItem::Text(_) => { /* TODO: "bbox for text not implemented" */ }
-//                         GraphicItem::EmbeddedFont(_) => {}
-//                     }
-//                 }
-//             }
-//         }
-//         for p in &lib_symbol.pins(self.unit) {
-//             pts.push(pin_position(self, p));
-//
-//             let tail_local = Pt {
-//                 x: p.length,
-//                 y: 0.0,
-//             };
-//             let transform_pin = Transform::new()
-//                 .translation(Pt {
-//                     x: p.pos.x,
-//                     y: p.pos.y,
-//                 })
-//                 .rotation(p.pos.angle);
-//
-//             let tail_symbol = transform_pin.transform_point(tail_local);
-//             let tail_world = transform.transform_point(tail_symbol);
-//             pts.push(tail_world);
-//         }
-//         Ok(calculate(&pts))
-//     }
-// }
-
 impl Bbox for Property {
     fn outline(&self) -> Result<Rect, RecadError> {
-        println!("outline: {:?}", self);
         text(&self.value, &self.pos, &self.effects)
     }
 }

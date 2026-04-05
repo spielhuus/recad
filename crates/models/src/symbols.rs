@@ -65,7 +65,7 @@ pub fn pin_names_offset(sexp: &Sexp) -> Result<Option<f64>, RecadError> {
 
 
 ///The symbol token defines a symbol or sub-unit of a parent symbol
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct LibrarySymbol {
     ///Each symbol must have a unique "LIBRARY_ID" for each top level symbol in the library
     ///or a unique "UNIT_ID" for each unit embedded in a parent symbol. Library identifiers

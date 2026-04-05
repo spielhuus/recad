@@ -1,0 +1,216 @@
+---
+source: tests/integration/plot/symbols.rs
+expression: svg_content
+---
+<svg height="61.8067mm" viewBox="25.4 18.203333 85.090004 80.01" width="59.69mm" xmlns="http://www.w3.org/2000/svg">
+<path d="M25.4,26.924 L33.02,26.924 L33.02,28.956001 L25.4,28.956001 L25.4,26.924 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<path d="M28.21,20.743334 L30.21,20.743334 L30.21,22.436666 L28.21,22.436666 L28.21,20.743334 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(28.21,22.436666)">
+R1
+</text>
+<path d="M27.71,23.283333 L30.71,23.283333 L30.71,24.976665 L27.71,24.976665 L27.71,23.283333 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(27.71,24.976665)">
+20k
+</text>
+<rect fill="none" height="2.03" stroke="#840000" stroke-width="0.35" width="5.08" x="26.67" y="26.92"/>
+<path d="M25.4,27.94 L26.669998,27.94" fill="none" stroke="#840000" stroke-width="0.35"/>
+<path d="M33.02,27.94 L31.75,27.94" fill="none" stroke="#840000" stroke-width="0.35"/>
+<path d="M46.989998,64.77 L57.15,64.77 L57.15,80.01 L46.989998,80.01 L46.989998,64.77 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<path d="M58.42,70.27324 L60.42,70.27324 L60.42,71.96657 L58.42,71.96657 L58.42,70.27324 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(58.42,71.96657)">
+U2
+</text>
+<path d="M58.42,72.81323 L63.42,72.81323 L63.42,74.50656 L58.42,74.50656 L58.42,72.81323 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(58.42,74.50656)">
+TL072
+</text>
+<path d="M57.15,67.31 L52.07,77.47 L46.989998,67.31 L57.15,67.31" fill="#FFFFC2" stroke="#840000" stroke-width="0.35"/>
+<path d="M54.61,64.77 L54.61,67.31" fill="none" stroke="#840000" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(52.84,66.88666)">
+5
+</text>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(53.763332,66.437) rotate(90)">
++
+</text>
+<path d="M49.53,64.77 L49.53,67.31" fill="none" stroke="#840000" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(47.76,66.88666)">
+6
+</text>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(48.68333,66.437) rotate(90)">
+-
+</text>
+<path d="M52.07,80.01 L52.07,77.47" fill="none" stroke="#840000" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(50.3,79.58667)">
+7
+</text>
+<path d="M49.53,21.59 L52.07,21.59 L52.07,24.13 L49.53,24.13 L49.53,21.59 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<path d="M49.3,18.203333 L52.3,18.203333 L52.3,19.896666 L49.3,19.896666 L49.3,18.203333 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(49.3,19.896666)">
+GND
+</text>
+<path d="M50.8,24.13 L50.8,22.859999 L49.53,22.859999 L50.8,21.59 L52.07,22.859999 L50.8,22.859999" fill="none" stroke="#840000" stroke-width="0.35"/>
+<path d="M50.8,24.13 L50.8,24.13" fill="none" stroke="#840000" stroke-width="0.35"/>
+<path d="M60.96,27.939999 L63.5,27.939999 L63.5,30.48 L60.96,30.48 L60.96,27.939999 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<path d="M56.69,28.363234 L59.69,28.363234 L59.69,30.056566 L56.69,30.056566 L56.69,28.363234 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(56.69,30.056566)">
+GND
+</text>
+<path d="M63.5,29.21 L62.23,29.21 L62.23,30.48 L60.96,29.21 L62.23,27.939999 L62.23,29.21" fill="none" stroke="#840000" stroke-width="0.35"/>
+<path d="M63.5,29.21 L63.5,29.21" fill="none" stroke="#840000" stroke-width="0.35"/>
+<path d="M25.400002,67.31 L40.64,67.31 L40.64,77.47 L25.400002,77.47 L25.400002,67.31 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<path d="M32.02,61.38333 L34.02,61.38333 L34.02,63.076668 L32.02,63.076668 L32.02,61.38333 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(32.02,63.076668)">
+U2
+</text>
+<path d="M30.52,63.92333 L35.52,63.92333 L35.52,65.61666 L30.52,65.61666 L30.52,63.92333 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(30.52,65.61666)">
+TL072
+</text>
+<path d="M38.100002,77.47 L27.94,72.39 L38.1,67.31 L38.100002,77.47" fill="#FFFFC2" stroke="#840000" stroke-width="0.35"/>
+<path d="M40.64,74.93 L38.1,74.93" fill="none" stroke="#840000" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(38.87,74.50667)">
+3
+</text>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(36.973,75.776665)">
++
+</text>
+<path d="M40.64,69.85 L38.1,69.85" fill="none" stroke="#840000" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(38.87,69.42667)">
+2
+</text>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(36.973,70.69666)">
+-
+</text>
+<path d="M25.400002,72.39 L27.94,72.39" fill="none" stroke="#840000" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(26.170002,71.96667)">
+1
+</text>
+<path d="M55.88,21.59 L58.420002,21.59 L58.420002,24.130001 L55.88,24.130001 L55.88,21.59 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<path d="M59.69,22.013233 L62.69,22.013233 L62.69,23.706566 L59.69,23.706566 L59.69,22.013233 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(59.69,23.706566)">
+GND
+</text>
+<path d="M55.88,22.86 L57.15,22.86 L57.15,21.59 L58.420002,22.86 L57.15,24.130001 L57.15,22.86" fill="none" stroke="#840000" stroke-width="0.35"/>
+<path d="M55.88,22.86 L55.88,22.86" fill="none" stroke="#840000" stroke-width="0.35"/>
+<path d="M25.400002,48.260002 L40.64,48.260002 L40.64,58.42 L25.400002,58.42 L25.400002,48.260002 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<path d="M32.02,42.333332 L34.02,42.333332 L34.02,44.02667 L32.02,44.02667 L32.02,42.333332 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(32.02,44.02667)">
+U1
+</text>
+<path d="M30.52,44.873333 L35.52,44.873333 L35.52,46.56667 L30.52,46.56667 L30.52,44.873333 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(30.52,46.56667)">
+TL072
+</text>
+<path d="M27.94,48.260002 L38.1,53.34 L27.94,58.42 L27.94,48.260002" fill="#FFFFC2" stroke="#840000" stroke-width="0.35"/>
+<path d="M25.400002,50.8 L27.94,50.8" fill="none" stroke="#840000" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(26.170002,50.376667)">
+3
+</text>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(28.067001,51.646667)">
++
+</text>
+<path d="M25.400002,55.88 L27.94,55.88" fill="none" stroke="#840000" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(26.170002,55.45667)">
+2
+</text>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(28.067001,56.72667)">
+-
+</text>
+<path d="M40.64,53.34 L38.1,53.34" fill="none" stroke="#840000" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(38.87,52.916668)">
+1
+</text>
+<path d="M49.53,27.94 L52.07,27.94 L52.07,30.48 L49.53,30.48 L49.53,27.94 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<path d="M49.3,32.173332 L52.3,32.173332 L52.3,33.86667 L49.3,33.86667 L49.3,32.173332 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(49.3,33.86667)">
+GND
+</text>
+<path d="M50.8,27.94 L50.8,29.210001 L52.07,29.210001 L50.8,30.48 L49.53,29.210001 L50.8,29.210001" fill="none" stroke="#840000" stroke-width="0.35"/>
+<path d="M50.8,27.94 L50.8,27.94" fill="none" stroke="#840000" stroke-width="0.35"/>
+<path d="M37.084,24.130001 L39.115997,24.130001 L39.115997,31.75 L37.084,31.75 L37.084,24.130001 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<path d="M40.64,25.823235 L42.64,25.823235 L42.64,27.516567 L40.64,27.516567 L40.64,25.823235 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(40.64,27.516567)">
+R2
+</text>
+<path d="M40.64,28.363234 L44.64,28.363234 L44.64,30.056566 L40.64,30.056566 L40.64,28.363234 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(40.64,30.056566)">
+100k
+</text>
+<rect fill="none" height="5.08" stroke="#840000" stroke-width="0.35" width="2.03" x="37.08" y="25.40"/>
+<path d="M38.1,24.130001 L38.1,25.400002" fill="none" stroke="#840000" stroke-width="0.35"/>
+<path d="M38.1,31.75 L38.1,30.48" fill="none" stroke="#840000" stroke-width="0.35"/>
+<path d="M69.85,69.85 L85.090004,69.85 L85.090004,69.85 L69.85,69.85 L69.85,69.85 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<path d="M76.47,63.92333 L78.47,63.92333 L78.47,65.61666 L76.47,65.61666 L76.47,63.92333 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(76.47,65.61666)">
+U2
+</text>
+<path d="M74.97,66.46333 L79.97,66.46333 L79.97,68.15666 L74.97,68.15666 L74.97,66.46333 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(74.97,68.15666)">
+TL072
+</text>
+<path d="M85.090004,69.85 L81.28,69.85" fill="none" stroke="#840000" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(82.685,69.42667)">
+8
+</text>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(79.153,70.69666)">
+V+
+</text>
+<path d="M69.85,69.85 L73.66,69.85" fill="none" stroke="#840000" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(71.255005,69.42667)">
+4
+</text>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(73.787,70.69666)">
+V-
+</text>
+<path d="M46.989998,44.45 L57.15,44.45 L57.15,59.69 L46.989998,59.69 L46.989998,44.45 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<path d="M58.42,49.95323 L60.42,49.95323 L60.42,51.64657 L58.42,51.64657 L58.42,49.95323 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(58.42,51.64657)">
+U1
+</text>
+<path d="M58.42,52.493233 L63.42,52.493233 L63.42,54.18657 L58.42,54.18657 L58.42,52.493233 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(58.42,54.18657)">
+TL072
+</text>
+<path d="M46.989998,57.15 L52.07,46.989998 L57.15,57.15 L46.989998,57.15" fill="#FFFFC2" stroke="#840000" stroke-width="0.35"/>
+<path d="M49.53,59.69 L49.53,57.15" fill="none" stroke="#840000" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(47.76,59.266666)">
+5
+</text>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(48.68333,57.023003) rotate(90)">
++
+</text>
+<path d="M54.61,59.69 L54.61,57.15" fill="none" stroke="#840000" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(52.84,59.266666)">
+6
+</text>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(53.763332,57.023003) rotate(90)">
+-
+</text>
+<path d="M52.07,44.45 L52.07,46.989998" fill="none" stroke="#840000" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(50.3,46.56667)">
+7
+</text>
+<path d="M73.66,44.45 L73.66,44.45 L73.66,59.69 L73.66,59.69 L73.66,44.45 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<path d="M74.93,49.95323 L76.93,49.95323 L76.93,51.64657 L74.93,51.64657 L74.93,49.95323 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(74.93,51.64657)">
+U1
+</text>
+<path d="M74.93,52.493233 L79.93,52.493233 L79.93,54.18657 L74.93,54.18657 L74.93,52.493233 z" fill="none" stroke="#808080" stroke-width="0.1"/>
+<text dominant-baseline="auto" fill="#05690C" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(74.93,54.18657)">
+TL072
+</text>
+<path d="M73.66,59.69 L73.66,55.88" fill="none" stroke="#840000" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(71.89001,58.631668)">
+8
+</text>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(72.81334,55.753002) rotate(90)">
+V+
+</text>
+<path d="M73.66,44.45 L73.66,48.26" fill="none" stroke="#840000" stroke-width="0.35"/>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(71.89001,47.201668)">
+4
+</text>
+<text dominant-baseline="auto" fill="#840000" font-family="osifont" font-size="1.27pt" text-anchor="start" transform="translate(72.81334,46.386997) rotate(90)">
+V-
+</text>
+</svg>

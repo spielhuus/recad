@@ -126,7 +126,7 @@ pub struct Attributes {
 #[derive(Debug, Clone, PartialEq)]
 pub enum FootprintType {
     /// Surface Mount Device (SMD) type.
-    SMD,
+    Smd,
     /// Through-hole type.
     ThroughHole,
 }

@@ -7,18 +7,24 @@ use types::{
 };
 
 pub mod border;
+#[cfg(feature = "wgpu")]
 mod egui_utils;
 mod gerber;
+#[cfg(feature = "svg")]
 mod svg;
 pub mod theme;
+#[cfg(feature = "wgpu")]
 mod wgpu;
+#[cfg(feature = "wgpu")]
 pub mod wgpu_3d;
+#[cfg(feature = "svg")]
 pub use svg::SvgPlotter;
 use theme::Themes;
 pub use wgpu::WgpuPlotter;
 pub use gerber::GerberPlotter;
 pub mod schema_plot;
 pub mod pcb_plot;
+#[cfg(feature = "wgpu")]
 pub mod pcb_plot_3d;
 
 pub trait Plot {

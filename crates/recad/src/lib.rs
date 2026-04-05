@@ -9,11 +9,20 @@ pub mod draw {
 }
 
 pub mod plot {
-    pub use plot::{Plot, PlotCommand, Plotter, SvgPlotter, WgpuPlotter, GerberPlotter, theme::{Theme, Themes}};
+    pub use plot::{Plot, PlotCommand, Plotter, GerberPlotter, theme::{Theme, Themes}};
+    #[cfg(feature = "svg")]
+    pub use plot::SvgPlotter;
+    #[cfg(feature = "wgpu")]
+    pub use plot::WgpuPlotter;
 }
 
 pub mod schema {
-    pub use models::schema::LocalLabel;
+    pub use models::schema::{LocalLabel, Junction, SchemaItem, Symbol};
+    pub use models::symbols::{LibrarySymbol, ElectricalTypes, Pin, PinProperty};
+}
+
+pub mod pcb {
+    pub use models::pcb::{FootprintType, LayerType};
 }
 
 pub mod simulation {
@@ -30,16 +39,4 @@ pub mod reports {
 pub mod netlist {
     pub use netlist::{Netlist, CircuitGraph};
 }
-
-// pub mod prelude {
-//     pub use types::gr::{Pt, Rect, Pos, Color};
-//     pub use types::error::RecadError;
-//
-//     pub use models::schema::Schema;
-//     pub use models::pcb::Pcb;
-//
-//     pub use plot::{Plot, Plotter};
-//     pub use models::geometry::Bbox;
-// }
-//
 

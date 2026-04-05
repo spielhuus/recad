@@ -15,6 +15,21 @@ edition = "2021"
 
 #font  models  plot  recad  reports  sexp  spice  types
 
+[features]
+default = ["svg", "wgpu"]
+svg = ["plot/svg"]
+wgpu = [
+    "plot/wgpu",
+    "dep:winit",
+    "dep:wgpu",
+    "dep:pollster",
+    "dep:bytemuck",
+    "dep:egui",
+    "dep:egui-winit",
+    "dep:egui-wgpu"
+]
+
+
 [dependencies]
 # Required base dependencies
 types = { path = "../types" }
@@ -31,17 +46,19 @@ plot = { path = "../plot" }
 
 spdlog-rs.workspace = true
 
-[dev-dependencies]
-# webgpu dependencies
-winit.workspace = true
-# log = "0.4"
-wgpu.workspace = true
-pollster.workspace = true
-bytemuck.workspace = true
+winit = { workspace = true, optional = true }
+wgpu = { workspace = true, optional = true }
+pollster = { workspace = true, optional = true }
+bytemuck = { workspace = true, optional = true }
+egui = { workspace = true, optional = true }
+egui-winit = { workspace = true, optional = true }
+egui-wgpu = { workspace = true, optional = true }
 
-egui.workspace = true
-egui-winit.workspace = true
-egui-wgpu.workspace = true
+
+[dev-dependencies]
+colored = "3"
+similar = "2.7"
+insta = { version = "1", features = ["yaml"] }
 
 [[examples]]
 name = "bom"
@@ -62,11 +79,15 @@ path = "examples/sim.rs"
 [[examples]]
 name = "svg_plot"
 path = "examples/svg_plot.rs"
+required-features = ["svg"]
 
 [[examples]]
 name = "wgpu_3d"
 path = "examples/wgpu_3d.rs"
+required-features = ["wgpu"]
 
 [[examples]]
 name = "wgpu"
 path = "examples/wgpu.rs"
+required-features = ["wgpu"]
+

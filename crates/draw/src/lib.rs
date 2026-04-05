@@ -2,6 +2,7 @@
 use std::collections::HashMap;
 
 use models::schema::Property;
+use models::symbols::LibrarySymbol;
 use models::{geometry::Bbox, schema::SchemaItem};
 use types::{
     constants::el,
@@ -243,6 +244,45 @@ impl Default for At {
     }
 }
 
+#[derive(Debug, Default, Eq, PartialEq)]
+struct PinDirections {
+    up: usize,
+    down: usize,
+    left: usize,
+    right: usize,
+}
+
+impl PinDirections {
+    fn single_pin(&self) -> bool {
+        let mut count = 0;
+        if self.up > 0 {
+            count += 1;
+        }
+        if self.down > 0 {
+            count += 1;
+        }
+        if self.left > 0 {
+            count += 1;
+        }
+        if self.right > 0 {
+            count += 1;
+        }
+        count == 1
+    }
+    fn free_up(&self) -> bool {
+        self.up == 0
+    }
+    fn free_down(&self) -> bool {
+        self.down == 0
+    }
+    fn free_left(&self) -> bool {
+        self.left == 0
+    }
+    fn free_right(&self) -> bool {
+        self.right == 0
+    }
+}
+
 // ==============================================================================
 // SCHEMA BUILDER
 // ==============================================================================
@@ -301,20 +341,20 @@ impl SchemaBuilder {
         }
     }
 
-
     /// Generates the next available reference for a given prefix (e.g., "R", "C").
     /// If "R1" and "R2" exist, next_reference("R") returns "R3".
     pub fn next_reference(&self, prefix: &str) -> String {
-        let max = self.schema
+        let max = self
+            .schema
             .items
             .iter()
             .filter_map(|item| {
                 if let SchemaItem::Symbol(s) = item {
                     if let Some(prop) = s.property(el::PROPERTY_REFERENCE) {
-                        prop.strip_prefix(prefix)?
-                        .parse::<u32>()
-                        .ok()
-                    } else { None }
+                        prop.strip_prefix(prefix)?.parse::<u32>().ok()
+                    } else {
+                        None
+                    }
                 } else {
                     None
                 }
@@ -339,7 +379,6 @@ impl SchemaBuilder {
             None
         })
     }
-
 
     /// Extracted helper from previously commented `impl Schema`
     fn apply_symbol_metadata(
@@ -408,8 +447,38 @@ impl SchemaBuilder {
             || a.end.y <= b.start.y + margin
             || a.start.y >= b.end.y - margin)
     }
-    /// Triggered right before saving to auto-place deferred items
-    pub fn finalize(&mut self) -> Result<&models::schema::Schema, RecadError> {
+
+    fn pin_directions(
+        &self,
+        lib_symbol: &LibrarySymbol,
+        symbol: &models::schema::Symbol,
+        sym_bbox: &Rect,
+    ) -> PinDirections {
+        let mut pin_directions = PinDirections::default();
+        let cx = sym_bbox.start.x + (sym_bbox.end.x - sym_bbox.start.x) / 2.0;
+        let cy = sym_bbox.start.y + (sym_bbox.end.y - sym_bbox.start.y) / 2.0;
+        for pin in lib_symbol.pins(symbol.unit) {
+            let pin_global_pt = models::geometry::pin_position(symbol, pin);
+            let dx = pin_global_pt.x - cx;
+            let dy = pin_global_pt.y - cy;
+
+            // Determine the primary axis of the pin relative to the center
+            if dx.abs() > dy.abs() {
+                if dx > 0.0 {
+                    pin_directions.right += 1;
+                } else {
+                    pin_directions.left += 1;
+                }
+            } else if dy > 0.0 {
+                pin_directions.down += 1;
+            } else {
+                pin_directions.up += 1;
+            }
+        }
+        pin_directions
+    }
+
+    fn bbox(&self) -> Result<Vec<Rect>, RecadError> {
         let mut static_bboxes = Vec::new();
 
         for item in &self.schema.items {
@@ -452,64 +521,27 @@ impl SchemaBuilder {
                 }
             }
         }
+        Ok(static_bboxes)
+    }
 
-        // 2. Iterate and place symbol properties contextually
+    /// Triggered right before saving to auto-place deferred items
+    pub fn finalize(&mut self) -> Result<&models::schema::Schema, RecadError> {
+        let static_bboxes = self.bbox()?;
+
         let num_items = self.schema.items.len();
         for i in 0..num_items {
-            let mut sym_bbox = {
-                if let models::schema::SchemaItem::Symbol(s) = &self.schema.items[i] {
-                    let lib_symbol = self.schema.library_symbol(&s.lib_id).ok_or_else(|| {
-                        RecadError::Schema(format!("Library symbol not found: {}", s.lib_id))
-                    })?;
-                    s.outline(lib_symbol).unwrap_or_default()
-                } else {
-                    continue; // Skip non-symbols
-                }
+            let mut props_updates: Vec<Property> = Vec::new();
+            let symbol = if let models::schema::SchemaItem::Symbol(s) = &self.schema.items[i] {
+                s
+            } else {
+                continue; // Skip non-symbols
             };
-            let props_to_place: Vec<&mut Property> =
-                if let SchemaItem::Symbol(symbol) = &mut self.schema.items[i] {
-                    spdlog::debug!("Load Properties");
-                    symbol
-                        .props
-                        .iter_mut()
-                        .filter(|p| {
-                            spdlog::debug!("Prop: {} {}", p.value, p.visible());
-                            p.visible() && !p.value.is_empty()
-                        })
-                        .collect()
-                } else {
-                    continue;
-                };
 
-            let bbox_properties: Vec<Rect> = dbg!(props_to_place
-                .iter()
-                .map(|p| (*p).clone())
-                .map(|mut p| {
-                    p.pos.angle = 0.0;
-                    p.outline()
-                })
-                .collect::<Result<Vec<Rect>, _>>()?);
+            let lib_symbol = self.schema.library_symbol(&symbol.lib_id).ok_or_else(|| {
+                RecadError::Schema(format!("Library symbol not found: {}", symbol.lib_id))
+            })?;
 
-            let mut max_width = 0.0_f64;
-            let mut sum_height = 0.0_f64;
-            let mut heights = vec![];
-            for bbox in &bbox_properties {
-                // Calculate width and height (using .abs() to ensure they are positive)
-                let width = (bbox.end.x - bbox.start.x).abs();
-                let height = (bbox.end.y - bbox.start.y).abs();
-                heights.push(height);
-                // Update max width
-                max_width = max_width.max(width);
-
-                // Add to total height
-                sum_height += height + SPACING;
-            }
-
-            spdlog::debug!("width/height: {}x{}", max_width, sum_height);
-
-            //search the directions
-            //TOP
-
+            let mut sym_bbox = symbol.outline(lib_symbol).unwrap_or_default();
             // Ensure start coordinates are always smaller than end coordinates
             if sym_bbox.start.x > sym_bbox.end.x {
                 std::mem::swap(&mut sym_bbox.start.x, &mut sym_bbox.end.x);
@@ -517,116 +549,166 @@ impl SchemaBuilder {
             if sym_bbox.start.y > sym_bbox.end.y {
                 std::mem::swap(&mut sym_bbox.start.y, &mut sym_bbox.end.y);
             }
-            assert!(
-                sym_bbox.start.x <= sym_bbox.end.x,
-                "end x is smaller then start x"
-            );
-            assert!(
-                sym_bbox.start.y <= sym_bbox.end.y,
-                "end y is smaller then start y"
-            );
 
-            let top_start = Pt {
-                x: sym_bbox.start.x + ((sym_bbox.end.x - sym_bbox.start.x) / 2.0) - max_width / 2.0,
-                y: sym_bbox.start.y - sum_height,
-            };
-            let top_end = top_start
-                + Pt {
-                    x: max_width,
-                    y: sum_height,
-                };
-            let rect = Rect {
-                start: top_start,
-                end: top_end,
-            };
+            let pin_directions = self.pin_directions(lib_symbol, symbol, &sym_bbox);
 
-            let collision = static_bboxes.iter().any(|b| Self::rect_intersect(&rect, b));
+            let props_to_place: Vec<&Property> = symbol
+                .props
+                .iter()
+                .filter(|p| {
+                    spdlog::debug!("Prop: {} {}", p.value, p.visible());
+                    p.visible() && !p.value.is_empty()
+                })
+                .collect();
 
-            if !collision {
-                let mut spacing = 0.0;
-                assert!(
-                    props_to_place.len() == heights.len(),
-                    "props and heights do not have the same size"
-                );
-                for (prop, height) in props_to_place.into_iter().zip(heights.iter()) {
-                    println!("HEIGHT: {}", height);
-                    prop.pos.x = sym_bbox.start.x + ((sym_bbox.end.x - sym_bbox.start.x) / 2.0);
-                    prop.pos.y = top_start.y + spacing;
-                    prop.effects.justify.clear();
-                    spacing += SPACING + height;
+            if props_to_place.is_empty() {
+                continue; // Nothing to place, move to next item
+            }
+
+            let bbox_properties: Vec<Rect> = props_to_place
+                .iter()
+                .map(|p| (*p).clone())
+                .map(|mut p| {
+                    p.pos.angle = 0.0;
+                    p.outline()
+                })
+                .collect::<Result<Vec<Rect>, _>>()?;
+
+            let mut max_width = 0.0_f64;
+            let mut sum_height = 0.0_f64;
+            let mut heights = vec![];
+            for bbox in &bbox_properties {
+                let width = (bbox.end.x - bbox.start.x).abs();
+                let height = (bbox.end.y - bbox.start.y).abs();
+                heights.push(height);
+                max_width = max_width.max(width);
+                sum_height += height + SPACING;
+            }
+
+            spdlog::debug!("width/height: {}x{}", max_width, sum_height);
+
+            // 1. Determine the prioritized order of placement directions
+            let mut preferred_directions = vec![
+                Direction::Up,
+                Direction::Right,
+                Direction::Down,
+                Direction::Left,
+            ];
+
+            if pin_directions.single_pin() {
+                if !pin_directions.free_up() {
+                    // Pin is UP (like GND). Text should go DOWN.
+                    preferred_directions = vec![Direction::Down, Direction::Right, Direction::Left, Direction::Up];
+                } else if !pin_directions.free_down() {
+                    // Pin is DOWN. Text should go UP.
+                    preferred_directions = vec![Direction::Up, Direction::Right, Direction::Left, Direction::Down];
+                } else if !pin_directions.free_left() {
+                    // Pin is LEFT. Text should go RIGHT.
+                    preferred_directions = vec![Direction::Right, Direction::Up, Direction::Down, Direction::Left];
+                } else if !pin_directions.free_right() {
+                    // Pin is RIGHT. Text should go LEFT.
+                    preferred_directions = vec![Direction::Left, Direction::Up, Direction::Down, Direction::Right];
                 }
             }
-            //RIGHT
-            //BOTTOM
-            //LEFT
 
-            // let cx = sym_bbox.start.x + (sym_bbox.end.x - sym_bbox.start.x) / 2.0;
-            // let cy = sym_bbox.start.y + (sym_bbox.end.y - sym_bbox.start.y) / 2.0;
-            // let base_margin = 1.27; // Grid spacing / safety gap
-            //
-            // for p_idx in props_to_place {
-            //     let mut placed_bbox = None;
-            //     let mut best_fallback = None;
-            //
-            //     // Test iteratively outwards up to 6 steps to allow stacking properties nicely
-            //     for step in 1..=6 {
-            //         let margin = base_margin * (step as f64);
-            //
-            //         // Search order: Above, Left, Below, Right
-            //         // Justify limits it to grow OUTWARD from the symbol to avoid intersections natively.
-            //         let candidates = [
-            //             (cx, sym_bbox.start.y - margin, vec![Justify::Bottom]), // Above (grows UP)
-            //             (sym_bbox.start.x - margin, cy, vec![Justify::Right]),  // Left (grows LEFT)
-            //             (cx, sym_bbox.end.y + margin, vec![Justify::Top]),      // Below (grows DOWN)
-            //             (sym_bbox.end.x + margin, cy, vec![Justify::Left]),     // Right (grows RIGHT)
-            //         ];
-            //
-            //         for (cand_x, cand_y, justify) in candidates {
-            //             // Mutate property briefly to test its outline/collision
-            //             if let models::schema::SchemaItem::Symbol(s) = &mut self.schema.items[i] {
-            //                 s.props[p_idx].pos.x = cand_x;
-            //                 s.props[p_idx].pos.y = cand_y;
-            //                 s.props[p_idx].pos.angle = 0.0; // Place standard upright for readability
-            //                 s.props[p_idx].effects.justify = justify.clone();
-            //             }
-            //
-            //             // Generate bounding box for this candidate position
-            //             let prop_bbox = if let models::schema::SchemaItem::Symbol(s) = &self.schema.items[i] {
-            //                 s.props[p_idx].outline(&self.schema).unwrap_or_default()
-            //             } else {
-            //                 Rect::default()
-            //             };
-            //
-            //             let collision = static_bboxes.iter().any(|b| Self::rect_intersect(&prop_bbox, b));
-            //
-            //             if !collision {
-            //                 placed_bbox = Some((prop_bbox, cand_x, cand_y, justify));
-            //                 break;
-            //             } else if best_fallback.is_none() {
-            //                 // Cache the first candidate (Above, step 1) as our fallback if nothing fits
-            //                 best_fallback = Some((prop_bbox, cand_x, cand_y, justify));
-            //             }
-            //         }
-            //
-            //         if placed_bbox.is_some() {
-            //             break;
-            //         }
-            //     }
-            //
-            //     // If no spot is totally free, use our safest bet
-            //     let (final_bbox, final_x, final_y, final_justify) = placed_bbox.unwrap_or_else(|| best_fallback.unwrap());
-            //
-            //     // Apply the final chosen position coordinates
-            //     if let models::schema::SchemaItem::Symbol(s) = &mut self.schema.items[i] {
-            //         s.props[p_idx].pos.x = final_x;
-            //         s.props[p_idx].pos.y = final_y;
-            //         s.props[p_idx].pos.angle = 0.0;
-            //         s.props[p_idx].effects.justify = final_justify;
-            //     }
-            //
-            //     // Add to our collision list so the next property properly clears it
-            //     static_bboxes.push(final_bbox);
-            // }
+            // A small helper struct just to hold the calculated position block
+            #[derive(Clone)]
+            struct Placement {
+                rect: Rect,
+                start_x: f64,
+                start_y: f64,
+            }
+
+            let sym_center_x = sym_bbox.start.x + ((sym_bbox.end.x - sym_bbox.start.x) / 2.0);
+            let sym_center_y = sym_bbox.start.y + ((sym_bbox.end.y - sym_bbox.start.y) / 2.0);
+
+            // 2. Search for the best collision-free position
+            let mut best_placement: Option<Placement> = None;
+            let mut first_choice: Option<Placement> = None;
+
+            for dir in &preferred_directions {
+                let (start_x, start_y, rect) = match dir {
+                    Direction::Up => {
+                        let sx = sym_center_x;
+                        let sy = sym_bbox.start.y - sum_height;
+                        let rect = Rect {
+                            start: Pt { x: sx - max_width / 2.0, y: sy },
+                            end: Pt { x: sx + max_width / 2.0, y: sym_bbox.start.y },
+                        };
+                        (sx, sy, rect)
+                    }
+                    Direction::Down => {
+                        let sx = sym_center_x;
+                        let sy = sym_bbox.end.y + SPACING;
+                        let rect = Rect {
+                            start: Pt { x: sx - max_width / 2.0, y: sy },
+                            end: Pt { x: sx + max_width / 2.0, y: sy + sum_height },
+                        };
+                        (sx, sy, rect)
+                    }
+                    Direction::Left => {
+                        let sx = sym_bbox.start.x - SPACING - (max_width / 2.0);
+                        let sy = sym_center_y - (sum_height / 2.0);
+                        let rect = Rect {
+                            start: Pt { x: sx - max_width / 2.0, y: sy },
+                            end: Pt { x: sx + max_width / 2.0, y: sy + sum_height },
+                        };
+                        (sx, sy, rect)
+                    }
+                    Direction::Right => {
+                        let sx = sym_bbox.end.x + SPACING + (max_width / 2.0);
+                        let sy = sym_center_y - (sum_height / 2.0);
+                        let rect = Rect {
+                            start: Pt { x: sx - max_width / 2.0, y: sy },
+                            end: Pt { x: sx + max_width / 2.0, y: sy + sum_height },
+                        };
+                        (sx, sy, rect)
+                    }
+                };
+
+                let placement = Placement { rect, start_x, start_y };
+
+                if first_choice.is_none() {
+                    first_choice = Some(placement.clone());
+                }
+
+                // Check for collision
+                let collision = static_bboxes.iter().any(|b| Self::rect_intersect(&placement.rect, b));
+                
+                if !collision {
+                    best_placement = Some(placement);
+                    break; // Found a free spot, break out of the SEARCH loop
+                }
+            }
+
+            // 3. Fallback if everything was occupied
+            let final_placement = best_placement.or(first_choice).unwrap();
+
+            // 4. Generate the property updates to be applied at the end
+            let mut spacing = 0.0;
+            assert!(
+                props_to_place.len() == heights.len(),
+                "props and heights do not have the same size"
+            );
+            
+            for (prop, height) in props_to_place.into_iter().zip(heights.iter()) {
+                let mut new_prop = prop.clone();
+                new_prop.pos.x = final_placement.start_x;
+                new_prop.pos.y = final_placement.start_y + spacing;
+                new_prop.effects.justify.clear();
+                
+                spacing += SPACING + height;
+                props_updates.push(new_prop);
+            }
+
+            // 5. Apply the updates back to the mutable schema item
+            if let models::schema::SchemaItem::Symbol(symbol) = &mut self.schema.items[i] {
+                for update in props_updates {
+                    let prop = symbol.props.iter_mut().find(|p| p.key == update.key).unwrap();
+                    prop.pos = update.pos;
+                    prop.effects = update.effects;
+                }
+            }
         }
 
         Ok(&self.schema)
@@ -934,20 +1016,20 @@ impl Drawer<Wire> for SchemaBuilder {
         } else {
             match cmd.attrs.direction() {
                 Direction::Left => Pt {
-                    x: pt.x - cmd.attrs.length().unwrap_or(self.grid),
+                    x: pt.x - cmd.attrs.length().unwrap_or(1.0),
                     y: pt.y,
                 },
                 Direction::Right => Pt {
-                    x: pt.x + cmd.attrs.length().unwrap_or(self.grid),
+                    x: pt.x + cmd.attrs.length().unwrap_or(1.0),
                     y: pt.y,
                 },
                 Direction::Up => Pt {
                     x: pt.x,
-                    y: pt.y - cmd.attrs.length().unwrap_or(self.grid),
+                    y: pt.y - cmd.attrs.length().unwrap_or(1.0),
                 },
                 Direction::Down => Pt {
                     x: pt.x,
-                    y: pt.y + cmd.attrs.length().unwrap_or(self.grid),
+                    y: pt.y + cmd.attrs.length().unwrap_or(1.0),
                 },
             }
         };
@@ -1157,4 +1239,193 @@ mod tests {
         assert_eq!(12.5, schema_label.pos.y);
         assert_eq!(90.0, schema_label.pos.angle);
     }
+
+    #[test]
+    fn test_opamp_pin_direction() {
+        let mut builder = SchemaBuilder::new("test");
+        let op_cmd = Symbol::new("U1", "TL072", "Amplifier_Operational:TL072").attr(Attribute::At(
+            At::Pt(Pt {
+                x: 2.54 * 20.0,
+                y: 2.54 * 10.0,
+            }),
+        ));
+        builder.draw(op_cmd).unwrap();
+        let symbol = builder.schema.symbol("U1", 1).unwrap();
+        let lib_symbol = builder
+            .schema
+            .library_symbol("Amplifier_Operational:TL072")
+            .unwrap();
+        let sym_bbox = symbol.outline(lib_symbol).unwrap();
+        let direction = builder.pin_directions(lib_symbol, symbol, &sym_bbox);
+        assert_eq!(
+            direction,
+            PinDirections {
+                up: 0,
+                down: 0,
+                left: 2,
+                right: 1
+            }
+        );
+    }
+
+    #[test]
+    fn test_opamp_final() {
+        let mut builder = SchemaBuilder::new("test");
+        let op_cmd = Symbol::new("U1", "TL072", "Amplifier_Operational:TL072").attr(Attribute::At(
+            At::Pt(Pt {
+                x: 2.54 * 20.0,
+                y: 2.54 * 10.0,
+            }),
+        ));
+        builder.draw(op_cmd).unwrap();
+        let schema = builder.finalize().unwrap();
+
+        let mut file = std::fs::File::create("opamp.kicad_sch").unwrap();
+        schema.write(&mut file).unwrap();
+        let symbol = schema.items.first().unwrap();
+        if let SchemaItem::Symbol(symbol) = symbol {
+            for prop in &symbol.props {
+                if prop.key == "Reference" {
+                    assert_eq!(
+                        prop.pos,
+                        Pos {
+                            x: 43.18,
+                            y: 15.240000038146974,
+                            angle: 0.0
+                        }
+                    );
+                } else if prop.key == "Value" {
+                    assert_eq!(
+                        prop.pos,
+                        Pos {
+                            x: 43.18,
+                            y: 17.780000019073487,
+                            angle: 0.0
+                        }
+                    );
+                } else {
+                    assert!(!prop.visible(), "{:?}", prop);
+                }
+            }
+        }
+    }
+
+#[test]
+    fn test_ground_symbol_property_placement() {
+        let mut builder = SchemaBuilder::new("test");
+        
+        // Command to place a GND symbol. 
+        // Note: Assuming "power:GND" is the correct lib_id in your library setup.
+        let gnd_cmd = Symbol::new("#PWR01", "GND", "power:GND").attr(Attribute::At(
+            At::Pt(Pt {
+                x: 50.8,
+                y: 50.8,
+            }),
+        ));
+        
+        builder.draw(gnd_cmd).unwrap();
+        
+        // Finalize will run the auto-placement logic
+        let schema = builder.finalize().unwrap();
+        
+        // Extract the symbol from the schema
+        let item = schema.items.first().unwrap();
+        if let SchemaItem::Symbol(symbol) = item {
+            // Get the library symbol to find its bounding box
+            let lib_symbol = schema.library_symbol("power:GND").expect("Failed to find power:GND in library");
+            let sym_bbox = symbol.outline(lib_symbol).unwrap();
+            
+            // For a Ground symbol, the single pin usually points UP.
+            // Therefore, the text should be placed at the BOTTOM (opposite side of the pin).
+            // In KiCad/screen coordinates, +Y is DOWN. 
+            // So we expect the property's Y coordinate to be greater than the symbol's bounding box end Y.
+            
+            let mut checked_props = 0;
+            for prop in &symbol.props {
+                if prop.visible() && !prop.value.is_empty() {
+                    checked_props += 1;
+                    
+                    assert!(
+                        prop.pos.y >= sym_bbox.end.y, 
+                        "Property {}='{}' is at Y={}, but bounding box ends at Y={}. It should be on the opposite side of the pin (BOTTOM).",
+                        prop.key, prop.value, prop.pos.y, sym_bbox.end.y
+                    );
+                }
+            }
+            assert!(checked_props > 0, "No visible properties were found to check.");
+        } else {
+            panic!("Expected the first item to be a Symbol");
+        }
+    }
+
+    #[test]
+    fn test_resistor_placement() {
+        let mut builder = SchemaBuilder::new("test");
+        
+        // Command to place a GND symbol. 
+        // Note: Assuming "power:GND" is the correct lib_id in your library setup.
+        let r_cmd = Symbol::new("R1", "100k", "Device:R").attr(Attribute::At(
+            At::Pt(Pt {
+                x: 50.8,
+                y: 50.8,
+            }),
+        )).attr(Attribute::Rotate(90.0));
+        builder.draw(r_cmd).unwrap();
+        
+
+        let r_cmd = Symbol::new("R2", "100k", "Device:R").attr(Attribute::At(
+            At::Pt(Pt {
+                x: 70.8,
+                y: 50.8,
+            }),
+        )).attr(Attribute::Rotate(0.0));
+        builder.draw(r_cmd).unwrap();
+
+        let r_cmd = Symbol::new("R3", "100k", "Device:R").attr(Attribute::At(
+            At::Pt(Pt {
+                x: 90.8,
+                y: 50.8,
+            }),
+        )).attr(Attribute::Rotate(180.0));
+        builder.draw(r_cmd).unwrap();
+
+        let r_cmd = Symbol::new("R4", "100k", "Device:R").attr(Attribute::At(
+            At::Pt(Pt {
+                x: 110.8,
+                y: 50.8,
+            }),
+        )).attr(Attribute::Rotate(270.0));
+        builder.draw(r_cmd).unwrap();
+
+        // Finalize will run the auto-placement logic
+        let schema = builder.finalize().unwrap();
+            
+        let mut file = std::fs::File::create("resistor.kicad_sch").unwrap();
+        schema.write(&mut file).unwrap();
+
+        // Extract the symbol from the schema
+        let item = schema.items.first().unwrap();
+        if let SchemaItem::Symbol(symbol) = item {
+            // Get the library symbol to find its bounding box
+            let lib_symbol = schema.library_symbol("Device:R").expect("Failed to find device:R in library");
+            let sym_bbox = symbol.outline(lib_symbol).unwrap();
+            
+            let mut checked_props = 0;
+            for prop in &symbol.props {
+                if prop.visible() && !prop.value.is_empty() {
+                    checked_props += 1;
+                    
+                    assert!(
+                        prop.pos.y >= sym_bbox.end.y, 
+                        "Property {}='{}' is at Y={}, but bounding box ends at Y={}. It should be on the opposite side of the pin (BOTTOM).",
+                        prop.key, prop.value, prop.pos.y, sym_bbox.end.y
+                    );
+                }
+            }
+            assert!(checked_props > 0, "No visible properties were found to check.");
+        } else {
+            panic!("Expected the first item to be a Symbol");
+        }
+    }
+
 }
