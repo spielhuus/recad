@@ -71,10 +71,9 @@ mod tests {
         let res = library.load("Device:R").unwrap();
         assert_eq!(res.lib_id, "Device:R");
         for prop in &res.props {
-            println!("prop: {}", prop.key);
             if ["Reference", "Value"].contains(&prop.key.as_str()) {
                 assert!(prop.visible());
-            } else if ["Footprint", "Datasheet", "Description", "ki_keywords", "ki_fp_filters"].contains(&prop.key.as_str()) {
+            } else if ["Footprint", "Datasheet", "Description", "ki_keywords", "ki_description", "ki_fp_filters"].contains(&prop.key.as_str()) {
                 assert!(!prop.visible());
             } else {
                 todo!("unknown property: {}", prop.key);
