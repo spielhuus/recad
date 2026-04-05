@@ -24,9 +24,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwayland-dev wayland-protocols ngspice pkg-config
-        # 💡 Note: Remove this step if `cargo doc` doesn't require compiling native code.
-
+          sudo apt-get install -y libwayland-dev wayland-protocols pkg-config libngspice0-dev
       - name: Build Documentation
         run: cargo doc --verbose --no-deps --package=recad --lib --all-features
 
