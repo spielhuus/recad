@@ -28,6 +28,18 @@ jobs:
       - name: Build Documentation
         run: cargo doc --verbose --no-deps --package=recad --lib --all-features
 
+
+      # 🔑 Create redirect so root URL loads your docs
+      - name: Add root redirect
+        run: |
+          cat > target/doc/index.html << 'EOF'
+          <!DOCTYPE html>
+          <meta charset="utf-8">
+          <title>Redirecting...</title>
+          <meta http-equiv="refresh" content="0; url=recad/index.html">
+          <script>window.location.replace("recad/index.html");</script>
+          EOF
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
