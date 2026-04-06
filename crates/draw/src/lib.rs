@@ -634,6 +634,7 @@ impl SchemaBuilder {
                     ];
                 }
             } else {
+                // Always prefer Right when there is space, independent of rotation
                 if pin_directions.free_up() {
                     preferred_directions.push(Direction::Up);
                 }
@@ -749,15 +750,42 @@ impl SchemaBuilder {
                 let mut new_prop = prop.clone();
                 new_prop.effects.justify.clear();
 
+                // Determine visual justification based on placement side
+                let mut visual_justify = match final_placement.dir {
+                    Direction::Left => Justify::Right,
+                    Direction::Right => Justify::Left,
+                    _ => Justify::Center, // Up/Down use center
+                };
+
+                // KiCad automatically flips text justification to keep it upright 
+                // when a component is rotated 180 degrees. We must counter-flip it.
+                let mut needs_flip = false;
+                if sym_angle_norm == 180 {
+                    needs_flip = true;
+                }
+                
+                // Mirroring horizontally (Y axis) also flips text justification
+                if symbol.mirror.as_deref() == Some("y") || symbol.mirror.as_deref() == Some("xy") {
+                    needs_flip = !needs_flip; 
+                }
+
+                if needs_flip {
+                    visual_justify = match visual_justify {
+                        Justify::Left => Justify::Right,
+                        Justify::Right => Justify::Left,
+                        other => other,
+                    };
+                }
+
+                // Apply the final justified value
+                if visual_justify != Justify::Center {
+                    new_prop.effects.justify.push(visual_justify);
+                }
+
+                // Set the X coordinate relative to the calculated edge
                 new_prop.pos.x = match final_placement.dir {
-                    Direction::Left => {
-                        new_prop.effects.justify.push(Justify::Right);
-                        final_placement.start_x + max_width
-                    }
-                    Direction::Right => {
-                        new_prop.effects.justify.push(Justify::Left);
-                        final_placement.start_x
-                    }
+                    Direction::Left => final_placement.start_x + max_width,
+                    Direction::Right => final_placement.start_x,
                     _ => final_placement.start_x + (max_width / 2.0),
                 };
 
@@ -1466,30 +1494,83 @@ mod tests {
         // schema.write(&mut file).unwrap();
 
         // Extract the symbol from the schema
-        let item = schema.items.first().unwrap();
-        if let SchemaItem::Symbol(symbol) = item {
-            let mut checked_props = 0;
-            for prop in &symbol.props {
-                if prop.visible() && !prop.value.is_empty() {
-                    checked_props += 1;
-                    if prop.value == "R1" {
-                        assert_eq!(
-                            prop.pos,
-                            Pos {
-                                x: 54.61,
-                                y: 45.59300002861023,
-                                angle: 90.0
-                            }
-                        );
+        for item in &schema.items {
+            if let SchemaItem::Symbol(symbol) = item {
+                let mut checked_props = 0;
+                for prop in &symbol.props {
+                    if prop.visible() && !prop.value.is_empty() {
+                        checked_props += 1;
+                        println!("prop: {}", prop.value);
+                        if prop.value == "R1" {
+                            assert_eq!(
+                                prop.pos,
+                                Pos {
+                                    x: 54.61,
+                                    y: 45.59300002861023,
+                                    angle: 90.0
+                                }
+                            );
+                            assert_eq!(prop.effects.justify, vec![]);
+                        } else if prop.value == "R2" {
+                            assert_eq!(
+                                prop.pos,
+                                Pos {
+                                    x: 73.086,
+                                    y: 53.46700000953674,
+                                    angle: 0.0
+                                }
+                            );
+                            assert_eq!(prop.effects.justify, vec![Justify::Left]);
+                        } else if prop.value == "R3" {
+                            assert_eq!(
+                                prop.pos,
+                                Pos {
+                                    x: 93.086,
+                                    y: 45.847000009536735,
+                                    angle: 0.0
+                                }
+                            );
+                            assert_eq!(prop.effects.justify, vec![Justify::Right]);
+                        } else if prop.value == "R4" {
+                            assert_eq!(
+                                prop.pos,
+                                Pos {
+                                    x: 106.99,
+                                    y: 45.59300002861023,
+                                    angle: 90.0
+                                }
+                            );
+                            assert_eq!(prop.effects.justify, vec![]);
+                        } else if prop.value == "R5" {
+                            assert_eq!(
+                                prop.pos,
+                                Pos {
+                                    x: 126.99000000000001,
+                                    y: 45.59300002861023,
+                                    angle: 90.0
+                                }
+                            );
+                            assert_eq!(prop.effects.justify, vec![]);
+                        } else if prop.value == "R6" {
+                            assert_eq!(
+                                prop.pos,
+                                Pos {
+                                    x: 126.99000000000001,
+                                    y: 55.59300002861023,
+                                    angle: 90.0
+                                }
+                            );
+                            assert_eq!(prop.effects.justify, vec![]);
+                        }
                     }
                 }
+                assert!(
+                    checked_props > 0,
+                    "No visible properties were found to check."
+                );
+            } else {
+                panic!("Expected the item to be a Symbol");
             }
-            assert!(
-                checked_props > 0,
-                "No visible properties were found to check."
-            );
-        } else {
-            panic!("Expected the first item to be a Symbol");
         }
     }
 
