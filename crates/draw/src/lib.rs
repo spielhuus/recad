@@ -746,12 +746,18 @@ impl SchemaBuilder {
             for i in 0..props_to_place.len() {
                 let prop = props_to_place[i];
                 let height = heights[i];
-                let width = widths[i];
                 let mut new_prop = prop.clone();
                 new_prop.effects.justify.clear();
+
                 new_prop.pos.x = match final_placement.dir {
-                    Direction::Left => final_placement.start_x + max_width - (width / 2.0),
-                    Direction::Right => final_placement.start_x + (width / 2.0),
+                    Direction::Left => {
+                        new_prop.effects.justify.push(Justify::Right);
+                        final_placement.start_x + max_width
+                    }
+                    Direction::Right => {
+                        new_prop.effects.justify.push(Justify::Left);
+                        final_placement.start_x
+                    }
                     _ => final_placement.start_x + (max_width / 2.0),
                 };
 
@@ -1481,6 +1487,67 @@ mod tests {
             assert!(
                 checked_props > 0,
                 "No visible properties were found to check."
+            );
+        } else {
+            panic!("Expected the first item to be a Symbol");
+        }
+    }
+
+    #[test]
+    fn test_transistor() {
+        let mut builder = SchemaBuilder::new("test");
+
+        // Command to place a Transistor symbol.
+        let r_cmd = Symbol::new("Q1", "BC547", "Transistor_BJT:BC547")
+            .attr(Attribute::At(At::Pt(Pt { x: 50.8, y: 50.8 })))
+            .attr(Attribute::Rotate(0.0));
+        builder.draw(r_cmd).unwrap();
+
+        // Finalize will run the auto-placement logic
+        let schema = builder.finalize().unwrap();
+
+        // let mut file = std::fs::File::create("transistor.kicad_sch").unwrap();
+        // schema.write(&mut file).unwrap();
+
+        // Extract the symbol from the schema
+        let item = schema.items.first().unwrap();
+        if let SchemaItem::Symbol(symbol) = item {
+            let mut ref_x = None;
+            let mut val_x = None;
+
+            let mut checked_props = 0;
+            for prop in &symbol.props {
+                if prop.visible() && !prop.value.is_empty() {
+                    checked_props += 1;
+
+                    // Capture the X coordinate for the Reference
+                    if prop.key == "Reference" {
+                        assert_eq!(prop.value, "Q1");
+                        ref_x = Some(prop.pos.x);
+                    }
+
+                    // Capture the X coordinate for the Value
+                    if prop.key == "Value" {
+                        assert_eq!(prop.value, "BC547");
+                        val_x = Some(prop.pos.x);
+                    }
+                }
+            }
+
+            assert!(
+                checked_props > 0,
+                "No visible properties were found to check."
+            );
+
+            // Ensure both properties were found
+            assert!(ref_x.is_some(), "Reference property was missing or hidden");
+            assert!(val_x.is_some(), "Value property was missing or hidden");
+
+            // Assert that the X coordinates are EXACTLY the same
+            assert_eq!(
+                ref_x.unwrap(),
+                val_x.unwrap(),
+                "The X coordinates for Reference and Value must be exactly the same!"
             );
         } else {
             panic!("Expected the first item to be a Symbol");
