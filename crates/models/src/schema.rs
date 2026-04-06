@@ -1,4 +1,9 @@
-use crate::{geometry::{calculate, pin_position}, library::SymbolLibrary, symbols::LibrarySymbol, transform::Transform};
+use crate::{
+    geometry::{calculate, pin_position},
+    library::SymbolLibrary,
+    symbols::LibrarySymbol,
+    transform::Transform,
+};
 use sexp::{builder::Builder, Sexp, SexpExt, SexpTree, SexpValue, SexpValueExt, SexpWrite};
 use std::{
     fmt,
@@ -9,7 +14,8 @@ use types::{
     constants::el,
     error::RecadError,
     gr::{
-        Arc, Circle, Color, Curve, Effects, FillType, GraphicItem, Line, PaperSize, Polyline, Pos, Pt, Pts, Rect, Rectangle, Stroke, TitleBlock
+        Arc, Circle, Color, Curve, Effects, FillType, GraphicItem, Line, PaperSize, Polyline, Pos,
+        Pt, Pts, Rect, Rectangle, Stroke, TitleBlock,
     },
     round, yes_or_no,
 };
@@ -52,6 +58,11 @@ impl SexpWrite for Property {
         builder.value(round(self.pos.angle));
         builder.end();
 
+        if let Some(hide) = self.hide {
+            builder.push(el::HIDE);
+            builder.value(yes_or_no(hide));
+            builder.end();
+        }
         self.effects.write(builder)?;
 
         builder.end();
@@ -1100,7 +1111,6 @@ impl Symbol {
         });
     }
 
-
     pub fn outline(&self, lib_symbol: &LibrarySymbol) -> Result<Rect, RecadError> {
         // let lib_symbol = schema.library_symbol(&self.lib_id).ok_or_else(||
         //     RecadError::Schema(format!("Library symbol not found: {}", self.lib_id)))?;
@@ -1135,7 +1145,9 @@ impl Symbol {
                                 y: circle.center.y + circle.radius,
                             }));
                         }
-                        GraphicItem::Curve(_) => { todo!{"bbox for curve not implemented!"}}
+                        GraphicItem::Curve(_) => {
+                            todo! {"bbox for curve not implemented!"}
+                        }
                         GraphicItem::Line(line) => {
                             for p in &line.pts.0 {
                                 pts.push(transform.transform_point(*p));
@@ -1359,16 +1371,6 @@ impl Schema {
     }
 
     ///Load a schema from a path
-    ///
-    ///``` TODO
-    ///use recad_core::Schema;
-    ///use std::path::Path;
-    ///
-    ///let path = Path::new("tests/summe/summe.kicad_sch");
-    ///
-    ///let schema = Schema::load(path);
-    ///assert!(schema.is_ok());
-    ///
     pub fn load(path: &Path, sheet: Option<String>) -> Result<Self, RecadError> {
         spdlog::debug!("load schema: {:?}", path);
         let parser = sexp::parser::SexpParser::load(path)?;
@@ -1541,13 +1543,15 @@ impl Schema {
             match lib {
                 Ok(lib) => {
                     self.library_symbols.push(lib.clone());
-
                 }
                 Err(err) => return Err(err),
             }
         }
 
-        self.library_symbols.iter().find(|s| s.lib_id == lib_id).ok_or_else(||RecadError::Schema(format!("LibrarySymbol {} not found.", lib_id)))
+        self.library_symbols
+            .iter()
+            .find(|s| s.lib_id == lib_id)
+            .ok_or_else(|| RecadError::Schema(format!("LibrarySymbol {} not found.", lib_id)))
     }
 
     pub fn symbol_by_ref(&self, ref_des: &str) -> Option<&Symbol> {
@@ -1795,9 +1799,7 @@ mod tests {
     pub const SCHEMA_SUMME: &str = "../../crates/recad/tests/files/summe/summe.kicad_sch";
     use std::path::Path;
 
-    use crate::{
-        schema::{Schema, SchemaItem, Symbol},
-    };
+    use crate::schema::{Schema, SchemaItem, Symbol};
 
     #[test]
     fn symbol_property() {

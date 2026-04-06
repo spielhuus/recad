@@ -8,7 +8,6 @@
 
 # TODO
 
-- the schema writer must also output the hide attribute on the property
 - make RECAD_DEBUG a property of the simulation call
 - PCB: mirror text on back silkscreen
 - check interface for bom, erc

@@ -17,7 +17,7 @@ pub mod plot {
 }
 
 pub mod schema {
-    pub use models::schema::{LocalLabel, Junction, SchemaItem, Symbol};
+    pub use models::schema::{LocalLabel, Junction, SchemaItem, Symbol, Property};
     pub use models::symbols::{LibrarySymbol, ElectricalTypes, Pin, PinProperty};
 }
 

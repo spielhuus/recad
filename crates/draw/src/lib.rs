@@ -11,7 +11,7 @@ use types::{
 };
 
 const MARGIN: f64 = 1.27;
-const LINE_SPACING: f64 = 0.254;
+const LINE_SPACING: f64 = 4.0 * 0.254;
 
 pub trait Drawer<Command> {
     type Output;
@@ -308,7 +308,7 @@ impl SchemaBuilder {
         self.last_pos = at;
     }
 
-    // Helper to resolve positions
+    // resolve positions
     pub fn get_pt(&self, at: &At) -> Pt {
         match at {
             At::Pt(pt) => *pt,
@@ -556,9 +556,7 @@ impl SchemaBuilder {
             let props_to_place: Vec<&Property> = symbol
                 .props
                 .iter()
-                .filter(|p| {
-                    p.visible() && !p.value.is_empty()
-                })
+                .filter(|p| p.visible() && !p.value.is_empty())
                 .collect();
 
             if props_to_place.is_empty() {
@@ -577,7 +575,7 @@ impl SchemaBuilder {
                 .iter()
                 .map(|p| (*p).clone())
                 .map(|mut p| {
-                    p.pos.angle = text_angle;
+                    p.pos.angle = 0.0;
                     p.outline()
                 })
                 .collect::<Result<Vec<Rect>, _>>()?;
@@ -598,39 +596,58 @@ impl SchemaBuilder {
                 }
             }
 
-            // 1. Determine the prioritized order of placement directions
+            // determine the prioritized order of placement directions
             let mut preferred_directions = vec![];
 
             if pin_directions.single_pin() {
                 if !pin_directions.free_up() {
                     // Pin is UP (like GND). Text should go DOWN.
-                    preferred_directions = vec![Direction::Down, Direction::Right, Direction::Left, Direction::Up];
+                    preferred_directions = vec![
+                        Direction::Down,
+                        Direction::Right,
+                        Direction::Left,
+                        Direction::Up,
+                    ];
                 } else if !pin_directions.free_down() {
                     // Pin is DOWN. Text should go UP.
-                    preferred_directions = vec![Direction::Up, Direction::Right, Direction::Left, Direction::Down];
+                    preferred_directions = vec![
+                        Direction::Up,
+                        Direction::Right,
+                        Direction::Left,
+                        Direction::Down,
+                    ];
                 } else if !pin_directions.free_left() {
                     // Pin is LEFT. Text should go RIGHT.
-                    preferred_directions = vec![Direction::Right, Direction::Up, Direction::Down, Direction::Left];
+                    preferred_directions = vec![
+                        Direction::Right,
+                        Direction::Up,
+                        Direction::Down,
+                        Direction::Left,
+                    ];
                 } else if !pin_directions.free_right() {
                     // Pin is RIGHT. Text should go LEFT.
-                    preferred_directions = vec![Direction::Left, Direction::Up, Direction::Down, Direction::Right];
+                    preferred_directions = vec![
+                        Direction::Left,
+                        Direction::Up,
+                        Direction::Down,
+                        Direction::Right,
+                    ];
                 }
             } else {
                 if pin_directions.free_up() {
                     preferred_directions.push(Direction::Up);
-                } 
+                }
                 if pin_directions.free_right() {
                     preferred_directions.push(Direction::Right);
                 }
                 if pin_directions.free_down() {
                     preferred_directions.push(Direction::Down);
-                } 
+                }
                 if pin_directions.free_left() {
                     preferred_directions.push(Direction::Left);
-                } 
+                }
             }
 
-            // A small helper struct just to hold the calculated position block
             #[derive(Clone)]
             struct Placement {
                 dir: Direction,
@@ -642,18 +659,21 @@ impl SchemaBuilder {
             let sym_center_x = sym_bbox.start.x + ((sym_bbox.end.x - sym_bbox.start.x) / 2.0);
             let sym_center_y = sym_bbox.start.y + ((sym_bbox.end.y - sym_bbox.start.y) / 2.0);
 
-            // 2. Search for the best collision-free position
+            // search for the best collision-free position
             let mut best_placement: Option<Placement> = None;
             let mut first_choice: Option<Placement> = None;
 
             for dir in &preferred_directions {
-            let (start_x, start_y, rect) = match dir {
+                let (start_x, start_y, rect) = match dir {
                     Direction::Up => {
                         let sx = sym_center_x - (max_width / 2.0); // Make sx the Left Edge
                         let sy = sym_bbox.start.y - MARGIN - block_height;
                         let rect = Rect {
                             start: Pt { x: sx, y: sy },
-                            end: Pt { x: sx + max_width, y: sy + block_height },
+                            end: Pt {
+                                x: sx + max_width,
+                                y: sy + block_height,
+                            },
                         };
                         (sx, sy, rect)
                     }
@@ -662,7 +682,10 @@ impl SchemaBuilder {
                         let sy = sym_bbox.end.y + MARGIN;
                         let rect = Rect {
                             start: Pt { x: sx, y: sy },
-                            end: Pt { x: sx + max_width, y: sy + block_height },
+                            end: Pt {
+                                x: sx + max_width,
+                                y: sy + block_height,
+                            },
                         };
                         (sx, sy, rect)
                     }
@@ -671,7 +694,10 @@ impl SchemaBuilder {
                         let sy = sym_center_y - (block_height / 2.0);
                         let rect = Rect {
                             start: Pt { x: sx, y: sy },
-                            end: Pt { x: sx + max_width, y: sy + block_height },
+                            end: Pt {
+                                x: sx + max_width,
+                                y: sy + block_height,
+                            },
                         };
                         (sx, sy, rect)
                     }
@@ -680,73 +706,68 @@ impl SchemaBuilder {
                         let sy = sym_center_y - (block_height / 2.0);
                         let rect = Rect {
                             start: Pt { x: sx, y: sy },
-                            end: Pt { x: sx + max_width, y: sy + block_height },
+                            end: Pt {
+                                x: sx + max_width,
+                                y: sy + block_height,
+                            },
                         };
                         (sx, sy, rect)
                     }
                 };
 
-                let placement = Placement { dir: dir.clone(), rect, start_x, start_y };
+                let placement = Placement {
+                    dir: dir.clone(),
+                    rect,
+                    start_x,
+                    start_y,
+                };
 
                 if first_choice.is_none() {
                     first_choice = Some(placement.clone());
                 }
 
                 // Check for collision
-                let collision = static_bboxes.iter().any(|b| Self::rect_intersect(&placement.rect, b));
-                
+                let collision = static_bboxes
+                    .iter()
+                    .any(|b| Self::rect_intersect(&placement.rect, b));
+
                 if !collision {
                     best_placement = Some(placement);
                     break; // Found a free spot, break out of the SEARCH loop
                 }
             }
 
-            // 3. Fallback if everything was occupied
+            // fallback if everything was occupied
             let final_placement = best_placement.or(first_choice).unwrap();
 
-            // 4. Generate the property updates to be applied at the end
+            // generate the property updates to be applied at the end
             let mut current_y = final_placement.start_y;
 
             for i in 0..props_to_place.len() {
                 let prop = props_to_place[i];
                 let height = heights[i];
                 let width = widths[i];
-                
                 let mut new_prop = prop.clone();
-                
-                // CLEAR justification flags to avoid KiCad rotation matrix quirks!
-                // By forcing it to default (Center/Center), KiCad will place the exact 
-                // center of the string at the (pos.x, pos.y) we provide.
                 new_prop.effects.justify.clear();
-
-                // Manually calculate X to achieve flush-left or flush-right alignments
                 new_prop.pos.x = match final_placement.dir {
-                    Direction::Left => {
-                        // Flush right against the symbol
-                        final_placement.start_x + max_width - (width / 2.0)
-                    },
-                    Direction::Right => {
-                        // Flush left against the symbol
-                        final_placement.start_x + (width / 2.0)
-                    },
-                    _ => {
-                        // Centered horizontally for Up and Down
-                        final_placement.start_x + (max_width / 2.0)
-                    }
+                    Direction::Left => final_placement.start_x + max_width - (width / 2.0),
+                    Direction::Right => final_placement.start_x + (width / 2.0),
+                    _ => final_placement.start_x + (max_width / 2.0),
                 };
-                
-                // Center the text vertically
+
                 new_prop.pos.y = current_y + (height / 2.0);
-                
-                // Advance Y coordinate for the next line
                 current_y += height + LINE_SPACING;
                 props_updates.push(new_prop);
-            } 
+            }
 
-            // 5. Apply the updates back to the mutable schema item
+            // write the result to the properties
             if let models::schema::SchemaItem::Symbol(symbol) = &mut self.schema.items[i] {
                 for update in props_updates {
-                    let prop = symbol.props.iter_mut().find(|p| p.key == update.key).unwrap();
+                    let prop = symbol
+                        .props
+                        .iter_mut()
+                        .find(|p| p.key == update.key)
+                        .unwrap();
                     prop.pos = update.pos;
                     prop.pos.angle = text_angle;
                     prop.effects = update.effects;
@@ -1254,237 +1275,215 @@ impl Drawer<Feedback> for SchemaBuilder {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use models::schema::SchemaItem;
-//     use types::gr::Pt;
-//
-//     #[test]
-//     fn test_local_label() {
-//         let mut builder = SchemaBuilder::new("test");
-//         let label_cmd = LocalLabel::new("INPUT")
-//             .attr(Attribute::Rotate(90.0))
-//             .attr(Attribute::At(At::Pt(Pt { x: 12.5, y: 12.5 })));
-//         let drawn_label = builder.draw(label_cmd).unwrap();
-//
-//         assert_eq!("INPUT", drawn_label.text);
-//         assert_eq!(12.5, drawn_label.pos.x);
-//         assert_eq!(12.5, drawn_label.pos.y);
-//         assert_eq!(90.0, drawn_label.pos.angle);
-//
-//         let Some(SchemaItem::LocalLabel(schema_label)) = builder.schema.items.last() else {
-//             panic!("label not found in schema items list");
-//         };
-//
-//         assert_eq!("INPUT", schema_label.text);
-//         assert_eq!(12.5, schema_label.pos.x);
-//         assert_eq!(12.5, schema_label.pos.y);
-//         assert_eq!(90.0, schema_label.pos.angle);
-//     }
-//
-//     #[test]
-//     fn test_opamp_pin_direction() {
-//         let mut builder = SchemaBuilder::new("test");
-//         let op_cmd = Symbol::new("U1", "TL072", "Amplifier_Operational:TL072").attr(Attribute::At(
-//             At::Pt(Pt {
-//                 x: 2.54 * 20.0,
-//                 y: 2.54 * 10.0,
-//             }),
-//         ));
-//         builder.draw(op_cmd).unwrap();
-//         let symbol = builder.schema.symbol("U1", 1).unwrap();
-//         let lib_symbol = builder
-//             .schema
-//             .library_symbol("Amplifier_Operational:TL072")
-//             .unwrap();
-//         let sym_bbox = symbol.outline(lib_symbol).unwrap();
-//         let direction = builder.pin_directions(lib_symbol, symbol, &sym_bbox);
-//         assert_eq!(
-//             direction,
-//             PinDirections {
-//                 up: 0,
-//                 down: 0,
-//                 left: 2,
-//                 right: 1
-//             }
-//         );
-//     }
-//
-//     #[test]
-//     fn test_opamp_final() {
-//         let mut builder = SchemaBuilder::new("test");
-//         let op_cmd = Symbol::new("U1", "TL072", "Amplifier_Operational:TL072").attr(Attribute::At(
-//             At::Pt(Pt {
-//                 x: 2.54 * 20.0,
-//                 y: 2.54 * 10.0,
-//             }),
-//         ));
-//         builder.draw(op_cmd).unwrap();
-//         let schema = builder.finalize().unwrap();
-//
-//         let mut file = std::fs::File::create("opamp.kicad_sch").unwrap();
-//         schema.write(&mut file).unwrap();
-//
-//         let symbol = schema.items.first().unwrap();
-//         if let SchemaItem::Symbol(symbol) = symbol {
-//             for prop in &symbol.props {
-//                 if prop.key == "Reference" {
-//                     assert_eq!(
-//                         prop.pos,
-//                         Pos {
-//                             x: 43.18,
-//                             y: 15.240000038146974,
-//                             angle: 0.0
-//                         }
-//                     );
-//                 } else if prop.key == "Value" {
-//                     assert_eq!(
-//                         prop.pos,
-//                         Pos {
-//                             x: 43.18,
-//                             y: 17.780000019073487,
-//                             angle: 0.0
-//                         }
-//                     );
-//                 } else {
-//                     assert!(!prop.visible(), "{:?}", prop);
-//                 }
-//             }
-//         }
-//     }
-//
-// #[test]
-//     fn test_ground_symbol_property_placement() {
-//         let mut builder = SchemaBuilder::new("test");
-//
-//         // Command to place a GND symbol. 
-//         // Note: Assuming "power:GND" is the correct lib_id in your library setup.
-//         let gnd_cmd = Symbol::new("#PWR01", "GND", "power:GND").attr(Attribute::At(
-//             At::Pt(Pt {
-//                 x: 50.8,
-//                 y: 50.8,
-//             }),
-//         ));
-//
-//         builder.draw(gnd_cmd).unwrap();
-//
-//         // Finalize will run the auto-placement logic
-//         let schema = builder.finalize().unwrap();
-//
-//         // Extract the symbol from the schema
-//         let item = schema.items.first().unwrap();
-//         if let SchemaItem::Symbol(symbol) = item {
-//             // Get the library symbol to find its bounding box
-//             let lib_symbol = schema.library_symbol("power:GND").expect("Failed to find power:GND in library");
-//             let sym_bbox = symbol.outline(lib_symbol).unwrap();
-//
-//             // For a Ground symbol, the single pin usually points UP.
-//             // Therefore, the text should be placed at the BOTTOM (opposite side of the pin).
-//             // In KiCad/screen coordinates, +Y is DOWN. 
-//             // So we expect the property's Y coordinate to be greater than the symbol's bounding box end Y.
-//
-//             let mut checked_props = 0;
-//             for prop in &symbol.props {
-//                 if prop.visible() && !prop.value.is_empty() {
-//                     checked_props += 1;
-//
-//                     assert!(
-//                         prop.pos.y >= sym_bbox.end.y, 
-//                         "Property {}='{}' is at Y={}, but bounding box ends at Y={}. It should be on the opposite side of the pin (BOTTOM).",
-//                         prop.key, prop.value, prop.pos.y, sym_bbox.end.y
-//                     );
-//                 }
-//             }
-//             assert!(checked_props > 0, "No visible properties were found to check.");
-//         } else {
-//             panic!("Expected the first item to be a Symbol");
-//         }
-//     }
-//
-//     #[test]
-//     fn test_resistor_placement() {
-//         let mut builder = SchemaBuilder::new("test");
-//
-//         // Command to place a GND symbol. 
-//         // Note: Assuming "power:GND" is the correct lib_id in your library setup.
-//         let r_cmd = Symbol::new("R1", "100k", "Device:R").attr(Attribute::At(
-//             At::Pt(Pt {
-//                 x: 50.8,
-//                 y: 50.8,
-//             }),
-//         )).attr(Attribute::Rotate(90.0));
-//         builder.draw(r_cmd).unwrap();
-//
-//
-//         let r_cmd = Symbol::new("R2", "100k", "Device:R").attr(Attribute::At(
-//             At::Pt(Pt {
-//                 x: 70.8,
-//                 y: 50.8,
-//             }),
-//         )).attr(Attribute::Rotate(0.0));
-//         builder.draw(r_cmd).unwrap();
-//
-//         let r_cmd = Symbol::new("R3", "100k", "Device:R").attr(Attribute::At(
-//             At::Pt(Pt {
-//                 x: 90.8,
-//                 y: 50.8,
-//             }),
-//         )).attr(Attribute::Rotate(180.0));
-//         builder.draw(r_cmd).unwrap();
-//
-//         let r_cmd = Symbol::new("R4", "100k", "Device:R").attr(Attribute::At(
-//             At::Pt(Pt {
-//                 x: 110.8,
-//                 y: 50.8,
-//             }),
-//         )).attr(Attribute::Rotate(270.0));
-//         builder.draw(r_cmd).unwrap();
-//
-//         let r_cmd = Symbol::new("R5", "100k", "Device:R").attr(Attribute::At(
-//             At::Pt(Pt {
-//                 x: 130.8,
-//                 y: 50.8,
-//             }),
-//         )).attr(Attribute::Rotate(270.0));
-//         builder.draw(r_cmd).unwrap();
-//         let r_cmd = Symbol::new("R6", "100k", "Device:R").attr(Attribute::At(
-//             At::Pt(Pt {
-//                 x: 130.8,
-//                 y: 60.8,
-//             }),
-//         )).attr(Attribute::Rotate(270.0));
-//         builder.draw(r_cmd).unwrap();
-//
-//         // Finalize will run the auto-placement logic
-//         let schema = builder.finalize().unwrap();
-//
-//         let mut file = std::fs::File::create("resistor.kicad_sch").unwrap();
-//         schema.write(&mut file).unwrap();
-//
-//         // Extract the symbol from the schema
-//         let item = schema.items.first().unwrap();
-//         if let SchemaItem::Symbol(symbol) = item {
-//             // Get the library symbol to find its bounding box
-//             let lib_symbol = schema.library_symbol("Device:R").expect("Failed to find device:R in library");
-//             let sym_bbox = symbol.outline(lib_symbol).unwrap();
-//
-//             let mut checked_props = 0;
-//             for prop in &symbol.props {
-//                 if prop.visible() && !prop.value.is_empty() {
-//                     checked_props += 1;
-//
-//                     assert!(
-//                         prop.pos.y >= sym_bbox.end.y, 
-//                         "Property {}='{}' is at Y={}, but bounding box ends at Y={}. It should be on the opposite side of the pin (BOTTOM).",
-//                         prop.key, prop.value, prop.pos.y, sym_bbox.end.y
-//                     );
-//                 }
-//             }
-//             assert!(checked_props > 0, "No visible properties were found to check.");
-//         } else {
-//             panic!("Expected the first item to be a Symbol");
-//         }
-//     }
-//
-// }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use models::schema::SchemaItem;
+    use types::gr::Pt;
+
+    #[test]
+    fn test_local_label() {
+        let mut builder = SchemaBuilder::new("test");
+        let label_cmd = LocalLabel::new("INPUT")
+            .attr(Attribute::Rotate(90.0))
+            .attr(Attribute::At(At::Pt(Pt { x: 12.5, y: 12.5 })));
+        let drawn_label = builder.draw(label_cmd).unwrap();
+
+        assert_eq!("INPUT", drawn_label.text);
+        assert_eq!(12.5, drawn_label.pos.x);
+        assert_eq!(12.5, drawn_label.pos.y);
+        assert_eq!(90.0, drawn_label.pos.angle);
+
+        let Some(SchemaItem::LocalLabel(schema_label)) = builder.schema.items.last() else {
+            panic!("label not found in schema items list");
+        };
+
+        assert_eq!("INPUT", schema_label.text);
+        assert_eq!(12.5, schema_label.pos.x);
+        assert_eq!(12.5, schema_label.pos.y);
+        assert_eq!(90.0, schema_label.pos.angle);
+    }
+
+    #[test]
+    fn test_opamp_pin_direction() {
+        let mut builder = SchemaBuilder::new("test");
+        let op_cmd = Symbol::new("U1", "TL072", "Amplifier_Operational:TL072").attr(Attribute::At(
+            At::Pt(Pt {
+                x: 2.54 * 20.0,
+                y: 2.54 * 10.0,
+            }),
+        ));
+        builder.draw(op_cmd).unwrap();
+        let symbol = builder.schema.symbol("U1", 1).unwrap();
+        let lib_symbol = builder
+            .schema
+            .library_symbol("Amplifier_Operational:TL072")
+            .unwrap();
+        let sym_bbox = symbol.outline(lib_symbol).unwrap();
+        let direction = builder.pin_directions(lib_symbol, symbol, &sym_bbox);
+        assert_eq!(
+            direction,
+            PinDirections {
+                up: 0,
+                down: 0,
+                left: 2,
+                right: 1
+            }
+        );
+    }
+
+    #[test]
+    fn test_opamp_final() {
+        let mut builder = SchemaBuilder::new("test");
+        let op_cmd = Symbol::new("U1", "TL072", "Amplifier_Operational:TL072").attr(Attribute::At(
+            At::Pt(Pt {
+                x: 2.54 * 20.0,
+                y: 2.54 * 10.0,
+            }),
+        ));
+        builder.draw(op_cmd).unwrap();
+        let schema = builder.finalize().unwrap();
+
+        // let mut file = std::fs::File::create("opamp.kicad_sch").unwrap();
+        // schema.write(&mut file).unwrap();
+
+        let symbol = schema.items.first().unwrap();
+        if let SchemaItem::Symbol(symbol) = symbol {
+            for prop in &symbol.props {
+                if prop.key == "Reference" {
+                    assert_eq!(
+                        prop.pos,
+                        Pos {
+                            x: 43.18,
+                            y: 16.12900002861023,
+                            angle: 0.0
+                        }
+                    );
+                } else if prop.key == "Value" {
+                    assert_eq!(
+                        prop.pos,
+                        Pos {
+                            x: 43.18,
+                            y: 18.415000009536744,
+                            angle: 0.0
+                        }
+                    );
+                } else {
+                    assert!(!prop.visible(), "{:?}", prop);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_ground_symbol_property_placement() {
+        let mut builder = SchemaBuilder::new("test");
+
+        // Command to place a GND symbol.
+        // Note: Assuming "power:GND" is the correct lib_id in your library setup.
+        let gnd_cmd = Symbol::new("#PWR01", "GND", "power:GND")
+            .attr(Attribute::At(At::Pt(Pt { x: 50.8, y: 50.8 })));
+
+        builder.draw(gnd_cmd).unwrap();
+
+        // Finalize will run the auto-placement logic
+        let schema = builder.finalize().unwrap();
+
+        // Extract the symbol from the schema
+        let item = schema.items.first().unwrap();
+        if let SchemaItem::Symbol(symbol) = item {
+            // Get the library symbol to find its bounding box
+            let lib_symbol = schema
+                .library_symbol("power:GND")
+                .expect("Failed to find power:GND in library");
+            let sym_bbox = symbol.outline(lib_symbol).unwrap();
+            let mut checked_props = 0;
+            for prop in &symbol.props {
+                if prop.visible() && !prop.value.is_empty() {
+                    checked_props += 1;
+
+                    assert!(
+                        prop.pos.y >= sym_bbox.end.y,
+                        "Property {}='{}' is at Y={}, but bounding box ends at Y={}. It should be on the opposite side of the pin (BOTTOM).",
+                        prop.key, prop.value, prop.pos.y, sym_bbox.end.y
+                    );
+                }
+            }
+            assert!(
+                checked_props > 0,
+                "No visible properties were found to check."
+            );
+        } else {
+            panic!("Expected the first item to be a Symbol");
+        }
+    }
+
+    #[test]
+    fn test_resistor_placement() {
+        let mut builder = SchemaBuilder::new("test");
+
+        // Command to place a GND symbol.
+        // Note: Assuming "power:GND" is the correct lib_id in your library setup.
+        let r_cmd = Symbol::new("R1", "100k", "Device:R")
+            .attr(Attribute::At(At::Pt(Pt { x: 50.8, y: 50.8 })))
+            .attr(Attribute::Rotate(90.0));
+        builder.draw(r_cmd).unwrap();
+
+        let r_cmd = Symbol::new("R2", "100k", "Device:R")
+            .attr(Attribute::At(At::Pt(Pt { x: 70.8, y: 50.8 })))
+            .attr(Attribute::Rotate(0.0));
+        builder.draw(r_cmd).unwrap();
+
+        let r_cmd = Symbol::new("R3", "100k", "Device:R")
+            .attr(Attribute::At(At::Pt(Pt { x: 90.8, y: 50.8 })))
+            .attr(Attribute::Rotate(180.0));
+        builder.draw(r_cmd).unwrap();
+
+        let r_cmd = Symbol::new("R4", "100k", "Device:R")
+            .attr(Attribute::At(At::Pt(Pt { x: 110.8, y: 50.8 })))
+            .attr(Attribute::Rotate(270.0));
+        builder.draw(r_cmd).unwrap();
+
+        let r_cmd = Symbol::new("R5", "100k", "Device:R")
+            .attr(Attribute::At(At::Pt(Pt { x: 130.8, y: 50.8 })))
+            .attr(Attribute::Rotate(270.0));
+        builder.draw(r_cmd).unwrap();
+        let r_cmd = Symbol::new("R6", "100k", "Device:R")
+            .attr(Attribute::At(At::Pt(Pt { x: 130.8, y: 60.8 })))
+            .attr(Attribute::Rotate(270.0));
+        builder.draw(r_cmd).unwrap();
+
+        // Finalize will run the auto-placement logic
+        let schema = builder.finalize().unwrap();
+
+        // let mut file = std::fs::File::create("resistor.kicad_sch").unwrap();
+        // schema.write(&mut file).unwrap();
+
+        // Extract the symbol from the schema
+        let item = schema.items.first().unwrap();
+        if let SchemaItem::Symbol(symbol) = item {
+            let mut checked_props = 0;
+            for prop in &symbol.props {
+                if prop.visible() && !prop.value.is_empty() {
+                    checked_props += 1;
+                    if prop.value == "R1" {
+                        assert_eq!(
+                            prop.pos,
+                            Pos {
+                                x: 54.61,
+                                y: 45.59300002861023,
+                                angle: 90.0
+                            }
+                        );
+                    }
+                }
+            }
+            assert!(
+                checked_props > 0,
+                "No visible properties were found to check."
+            );
+        } else {
+            panic!("Expected the first item to be a Symbol");
+        }
+    }
+}
