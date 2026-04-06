@@ -750,19 +750,20 @@ impl SchemaBuilder {
                 let mut new_prop = prop.clone();
                 new_prop.effects.justify.clear();
 
-                // Determine visual justification based on placement side
+                // 1. Determine visual justification based on placement side
                 let mut visual_justify = match final_placement.dir {
                     Direction::Left => Justify::Right,
                     Direction::Right => Justify::Left,
                     _ => Justify::Center, // Up/Down use center
                 };
 
-                // KiCad automatically flips text justification to keep it upright 
-                // when a component is rotated 180 degrees. We must counter-flip it.
-                let mut needs_flip = false;
-                if sym_angle_norm == 180 {
-                    needs_flip = true;
-                }
+                // 2. Calculate the absolute angle of the text. 
+                // In KiCad, property angles are relative to the symbol angle.
+                let abs_angle = (sym_angle_norm + text_angle as i32) % 360;
+
+                // 3. If the absolute angle is 180, KiCad's auto-upright forces it to 0 
+                // AND flips the horizontal justification. We must counter-flip it.
+                let mut needs_flip = abs_angle == 180;
                 
                 // Mirroring horizontally (Y axis) also flips text justification
                 if symbol.mirror.as_deref() == Some("y") || symbol.mirror.as_deref() == Some("xy") {
@@ -777,12 +778,12 @@ impl SchemaBuilder {
                     };
                 }
 
-                // Apply the final justified value
+                // 4. Apply the final justified value
                 if visual_justify != Justify::Center {
                     new_prop.effects.justify.push(visual_justify);
                 }
 
-                // Set the X coordinate relative to the calculated edge
+                // 5. Set the X coordinate relative to the calculated edge
                 new_prop.pos.x = match final_placement.dir {
                     Direction::Left => final_placement.start_x + max_width,
                     Direction::Right => final_placement.start_x,
@@ -1630,6 +1631,88 @@ mod tests {
                 val_x.unwrap(),
                 "The X coordinates for Reference and Value must be exactly the same!"
             );
+        } else {
+            panic!("Expected the first item to be a Symbol");
+        }
+    }
+
+    #[test]
+    fn test_diode() {
+        let mut builder = SchemaBuilder::new("test diode");
+
+        // Command to place a Transistor symbol.
+        let r_cmd = Symbol::new("D1", "1N4148", "Diode:1N4148")
+            .attr(Attribute::At(At::Pt(Pt { x: 50.8, y: 50.8 })))
+            .attr(Attribute::Rotate(90.0));
+        builder.draw(r_cmd).unwrap();
+
+        // Finalize will run the auto-placement logic
+        let schema = builder.finalize().unwrap();
+
+        // let mut file = std::fs::File::create("diode.kicad_sch").unwrap();
+        // schema.write(&mut file).unwrap();
+
+        // Extract the symbol from the schema
+        let item = schema.items.first().unwrap();
+        if let SchemaItem::Symbol(symbol) = item {
+            let mut ref_x = None;
+            let mut val_x = None;
+
+            let mut checked_props = 0;
+            for prop in &symbol.props {
+                if prop.visible() && !prop.value.is_empty() {
+                    checked_props += 1;
+
+                    // Capture the X coordinate for the Reference
+                    if prop.key == "Reference" {
+                        assert_eq!(prop.value, "D1");
+                        ref_x = Some(prop.pos.x);
+                    }
+
+                    // Capture the X coordinate for the Value
+                    if prop.key == "Value" {
+                        assert_eq!(prop.value, "1N4148");
+                        val_x = Some(prop.pos.x);
+                    }
+                }
+            }
+
+            assert!(
+                checked_props > 0,
+                "No visible properties were found to check."
+            );
+
+            // Ensure both properties were found
+            assert!(ref_x.is_some(), "Reference property was missing or hidden");
+            assert!(val_x.is_some(), "Value property was missing or hidden");
+
+            // Assert that the X coordinates are EXACTLY the same
+            assert_eq!(
+                ref_x.unwrap(),
+                val_x.unwrap(),
+                "The X coordinates for Reference and Value must be exactly the same!"
+            );
+
+            for item in &schema.items {
+                if let SchemaItem::Symbol(symbol) = item {
+                    for prop in &symbol.props {
+                        if prop.visible() && !prop.value.is_empty() {
+                            println!("prop: {}", prop.value);
+                            if prop.value == "D1" {
+                                assert_eq!(
+                                    prop.pos,
+                                    Pos {
+                                        x: 53.34,
+                                        y: 45.847000009536735,
+                                        angle: 90.0
+                                    }
+                                );
+                                assert_eq!(prop.effects.justify, vec![Justify::Right]);
+                            }
+                        }
+                    }
+                }
+            }
         } else {
             panic!("Expected the first item to be a Symbol");
         }
