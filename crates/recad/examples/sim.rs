@@ -30,10 +30,11 @@ fn main() {
     logger.set_flush_level_filter(spdlog::LevelFilter::All);
     spdlog::set_default_logger(logger);
 
+
     let schema = common::opamp::draw().unwrap();
     let netlist = Netlist::from(&schema);
     let graph = CircuitGraph::from_netlist(netlist, &schema);
-    let mut circuit = graph.to_circuit("opamp".to_string(), vec![String::from("./tests/spice")]);
+    let mut circuit = graph.to_circuit("opamp".to_string(), vec![String::from("./crates/recad/tests/files/spice")]);
 
     circuit.voltage("1", "+15V", "GND", "DC 15V");
     circuit.voltage("2", "-15V", "GND", "DC -15V");

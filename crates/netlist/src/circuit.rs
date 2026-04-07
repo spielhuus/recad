@@ -1,15 +1,4 @@
 //! Circuit struct to create the spice directives.
-//
-// # Examples
-// ```
-// use sexp::{SexpParser, SexpTree};
-//
-// let doc = SexpParser::load("tests/summe/summe.kicad_sch").unwrap();
-// let tree = SexpTree::from(doc.iter()).unwrap();
-// let root = tree.root().unwrap();
-//
-// assert_eq!("kicad_sch", root.name);
-// ```
 
 use types::{
     error::RecadError,
@@ -215,16 +204,20 @@ impl Circuit {
 impl Circuit {
     /// Adds a generic component (like a Chip, subcircuit, or unknown symbol)
     /// This handles the "X" prefix or standard components defined by RefDes
-    pub fn generic_component(&mut self, ref_des: String, nodes: Vec<String>, value: String) {
-        // Simple heuristic: If it starts with R, C, L, Q, D, M, J, use specific types,
-        // otherwise default to Subcircuit (X) or generic modeling.
-
-        let prefix = ref_des
-            .chars()
-            .next()
-            .unwrap_or('X')
-            .to_uppercase()
-            .to_string();
+    pub fn generic_component(&mut self, ref_des: String, nodes: Vec<String>, value: String, sim_device: String) {
+        let prefix = if !sim_device.is_empty() {
+            match sim_device.to_uppercase().as_str() {
+                "SUBCKT" => "X".to_string(),
+                "BJT" => "Q".to_string(),
+                "MOSFET" => "M".to_string(),
+                "JFET" => "J".to_string(),
+                "DIODE" => "D".to_string(),
+                // For "R", "C", "L", "V", "I", etc., the first char is correct
+                p => p.chars().next().unwrap_or('X').to_uppercase().to_string(),
+            }
+        } else {
+            ref_des.chars().next().unwrap_or('X').to_uppercase().to_string()
+        };
 
         match prefix.as_str() {
             "R" if nodes.len() == 2 => {
@@ -236,21 +229,21 @@ impl Circuit {
             "D" if nodes.len() == 2 => {
                 self.diode(ref_des, nodes[0].clone(), nodes[1].clone(), value)
             }
-            "Q" if nodes.len() >= 3 => self.bjt(
+            "Q" if nodes.len() == 3 => self.bjt(
                 ref_des,
                 nodes[0].clone(),
                 nodes[1].clone(),
                 nodes[2].clone(),
                 value,
             ),
-            "J" if nodes.len() >= 3 => self.jfet(
+            "J" if nodes.len() == 3 => self.jfet(
                 ref_des,
                 nodes[0].clone(),
                 nodes[1].clone(),
                 nodes[2].clone(),
                 value,
             ),
-            "M" if nodes.len() >= 4 => self.mosfet(
+            "M" if nodes.len() == 4 => self.mosfet(
                 ref_des,
                 nodes[0].clone(),
                 nodes[1].clone(),
@@ -263,7 +256,6 @@ impl Circuit {
             }
             _ => {
                 // Default to X (Subcircuit) or just treat as generic X element
-                // Note: You might need to check if 'value' is actually a model name here.
                 let _ = self.circuit(ref_des, nodes, value);
             }
         }

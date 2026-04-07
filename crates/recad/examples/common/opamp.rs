@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use recad::draw::*;
 use recad::{Schema, RecadError, Pt};
 
+#[allow(unused)]
 pub fn draw() -> Result<Schema, RecadError> {
     // 1. Initialize the Schema Builder
     // This creates an empty schematic canvas.

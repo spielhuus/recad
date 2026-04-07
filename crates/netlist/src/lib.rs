@@ -42,6 +42,7 @@ pub enum CircuitNode {
         value: String,
         sim_pins: String,
         sim_name: String,
+        sim_device: String,
     },
     // An Electrical Connection (e.g., Net +5V)
     Net {
@@ -84,6 +85,7 @@ impl CircuitGraph {
                 if sym.exclude_from_sim || sym.lib_id.ends_with("PWR_FLAG") {
                     continue;
                 }
+                //TODO: validate Sim.Pins and Sim.Device
                 let comp_node_idx = *comp_map.entry(ref_des.clone()).or_insert_with(|| {
                     graph.add_node(CircuitNode::Component {
                         ref_des: ref_des.clone(),
@@ -91,6 +93,7 @@ impl CircuitGraph {
                         value: sym.property("Value").unwrap_or_default(),
                         sim_pins: sym.property("Sim.Pins").unwrap_or_default(),
                         sim_name: sym.property("Sim.Name").unwrap_or_default(),
+                        sim_device: sym.property("Sim.Device").unwrap_or_default(),
                     })
                 });
 
@@ -134,6 +137,7 @@ impl CircuitGraph {
                 value,
                 sim_pins,
                 sim_name,
+                sim_device,
                 ..
             } = &self.graph[node_idx]
             {
@@ -188,7 +192,7 @@ impl CircuitGraph {
                 } else {
                     value.clone()
                 };
-                circuit.generic_component(ref_des.clone(), node_list, component_value);
+                circuit.generic_component(ref_des.clone(), node_list, component_value, sim_device.clone());
             }
         }
 

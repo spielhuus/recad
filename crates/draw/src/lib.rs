@@ -1501,7 +1501,6 @@ mod tests {
                 for prop in &symbol.props {
                     if prop.visible() && !prop.value.is_empty() {
                         checked_props += 1;
-                        println!("prop: {}", prop.value);
                         if prop.value == "R1" {
                             assert_eq!(
                                 prop.pos,

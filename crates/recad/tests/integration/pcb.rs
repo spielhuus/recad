@@ -6,7 +6,7 @@ mod tests {
 
     #[test]
     fn test_parse_full_summe_pcb_strict() {
-        let pcb_path = Path::new("tests/summe/summe.kicad_pcb");
+        let pcb_path = Path::new("tests/files/summe/summe.kicad_pcb");
         if !pcb_path.exists() {
             println!(
                 "Test skipped: file {} not found. Save the snippet to run this test.",
